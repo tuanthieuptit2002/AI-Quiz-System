@@ -1,0 +1,12 @@
+**/node_modules/
+**/.next/
+**/out/
+**/build/
+**/*.tsbuildinfo
+**/.env
+**/.env.*
+!**/.env.example
+.DS_Store
+.vscode/mcp.json
+backend/dist/
+backend/.mail/

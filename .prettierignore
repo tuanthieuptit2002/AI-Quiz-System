@@ -1,0 +1,16 @@
+**/node_modules/**
+**/.next/**
+**/dist/**
+**/out/**
+**/build/**
+**/coverage/**
+**/.mail/**
+**/.env
+**/.env.*
+**/package-lock.json
+**/*.tsbuildinfo
+**/next-env.d.ts
+**/AGENTS.md
+**/CLAUDE.md
+.git/**
+.vscode/**
