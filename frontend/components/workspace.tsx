@@ -34,6 +34,7 @@ import { HistoryPage, ProgressPage } from './workspace-learning';
 import { ProfilePage } from './workspace-profile';
 import { QuestionBank } from './workspace-questions';
 import { ExamManagement, StudentExams } from './workspace-exams';
+import { AIExamStudio } from './workspace-ai-exams';
 import { AIStudio } from './workspace-ai';
 
 export type View =
@@ -46,7 +47,8 @@ export type View =
   | 'profile'
   | 'questions'
   | 'exams'
-  | 'ai';
+  | 'ai'
+  | 'ai-exams';
 export type Notify = (message: string, error?: boolean) => void;
 const navigation = [
   {
@@ -64,6 +66,7 @@ const navigation = [
     icon: ClipboardList,
     roles: ['ADMIN', 'TEACHER', 'STUDENT'],
   },
+  { view: 'ai-exams', label: 'Tạo đề thi AI', icon: ClipboardList, roles: ['ADMIN', 'TEACHER'] },
   { view: 'classes', label: 'Lớp học', icon: BookOpen, roles: ['TEACHER', 'STUDENT'] },
   { view: 'students', label: 'Học sinh', icon: GraduationCap, roles: ['TEACHER'] },
   { view: 'history', label: 'Lịch sử thi', icon: History, roles: ['STUDENT'] },
@@ -242,6 +245,7 @@ export function Workspace({ view }: { view: View }) {
               {view === 'progress' && <ProgressPage />}
               {view === 'profile' && <ProfilePage notify={notify} />}
               {view === 'questions' && <QuestionBank notify={notify} />}
+              {view === 'ai-exams' && <AIExamStudio notify={notify} />}
               {view === 'ai' && <AIStudio notify={notify} />}
               {view === 'exams' &&
                 (user.role === 'STUDENT' ? (

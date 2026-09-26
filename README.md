@@ -88,9 +88,21 @@ Mở **http://localhost:3000/ai** hoặc chọn **Tạo câu hỏi AI**. Cấu h
 
 Key chỉ dùng ở backend. Xem [hướng dẫn cấu hình, giới hạn và API AI](docs/ai-question-generator.md).
 
+## AI Exam Generator — tạo đề từ yêu cầu
+
+Mở **http://localhost:3000/ai-exams** hoặc chọn **Tạo đề thi AI**. Dùng chung cấu hình DeepSeek hiện có.
+
+- Nhập yêu cầu tự nhiên: mục tiêu, số câu, thời lượng và tỷ lệ chủ đề. AI đề xuất cấu trúc để Teacher chỉnh sửa và duyệt.
+- Phân bổ đúng tổng số câu, hỗ trợ kết hợp Question Bank + AI, chỉ ngân hàng hoặc tạo mới toàn bộ bằng AI.
+- Theo dõi tiến độ/lịch sử, thử lại phần thiếu, xem đáp án, chỉnh sửa và tạo câu thay thế trước khi lưu.
+- Duyệt để lưu đề nháp vào Exam Builder; các câu mới vào Question Bank kèm version history. Cấu hình lịch và đối tượng trước khi phát hành.
+- Tối đa 100 câu, 12 chủ đề và 480 phút. Ví dụ 50 câu với tỷ lệ 30/30/20/10/10 cho kết quả 15/15/10/5/5 câu.
+
+Xem [hướng dẫn AI Exam Generator](docs/ai-exam-generator.md) về quy tắc chọn câu, giới hạn và API.
+
 ## Dữ liệu học tập
 
-Các collection chính: `users`, `sessions`, `classes`, `questions`, `questionVersions`, `exams`, `examRuns`, `examAttempts` và `aiGenerations`. Unique/TTL index được tạo khi server khởi động.
+Các collection chính: `users`, `sessions`, `classes`, `questions`, `questionVersions`, `exams`, `examRuns`, `examAttempts`, `aiGenerations` và `aiExams`. Unique/TTL index được tạo khi server khởi động.
 
 Lịch sử và tiến độ đọc dữ liệu thật từ `examAttempts`, không tạo điểm mẫu. Khi bài thi được chấm xong, backend ghi kết quả vào collection này (thang điểm 10). Bài có tự luận chưa chấm đủ không được tính vào tiến độ. Học sinh không thể tự gửi điểm.
 
@@ -142,7 +154,7 @@ Kiểm tra gồm tài khoản/RBAC, Question Bank, import/export, Exam Builder, 
 ## Cấu trúc
 
 - `backend/src/app.ts`: lắp ghép middleware và routes; `server.ts` khởi động server.
-- `backend/src/routes`: khai báo đường dẫn API theo auth, profile, admin, teacher, student, questions, exams, ai.
+- `backend/src/routes`: khai báo đường dẫn API theo auth, profile, admin, teacher, student, questions, exams, ai, ai-exams.
 - `backend/src/controllers`: xử lý request theo từng nhóm tính năng.
 - `backend/src/middleware`: xác thực, phân quyền, kiểm tra request, giới hạn tần suất và xử lý lỗi.
 - `backend/src/models`: kiểu dữ liệu MongoDB và hàm chuyển dữ liệu trả về client.

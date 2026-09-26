@@ -4,6 +4,8 @@ import { loadConfig } from './common/config.js';
 import { createApp } from './app.js';
 import { startExamClock } from './common/exam-runtime.js';
 import { startAIWorker } from './common/ai-runtime.js';
+import { startAIExamWorker } from './common/ai-exam-runtime.js';
+import { createExamPlanner } from './common/ai-exam-provider.js';
 import { createDeepSeekGenerator } from './common/ai-provider.js';
 
 try {
@@ -12,6 +14,11 @@ try {
   await ensureIndexes(db);
   const stopExamClock = startExamClock(db);
   const stopAIWorker = startAIWorker(db, createDeepSeekGenerator(config));
+  const stopAIExams = startAIExamWorker(
+    db,
+    createExamPlanner(config),
+    createDeepSeekGenerator(config),
+  );
   const port = Number(process.env.PORT || 8080);
   const server = createApp(db, config).listen(port, () =>
     console.log(`QuizSpace API http://localhost:${port} • MongoDB connected`),
@@ -25,6 +32,7 @@ try {
     process.once(signal, () => {
       stopExamClock();
       stopAIWorker();
+      stopAIExams();
       const timeout = setTimeout(() => process.exit(1), 10000).unref();
       server.close(async () => {
         await closeDatabase();

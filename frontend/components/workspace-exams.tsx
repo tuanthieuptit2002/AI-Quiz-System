@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   Archive,
   ArrowLeft,
@@ -18,6 +19,7 @@ import {
   Shuffle,
   Target,
   Users,
+  Sparkles,
 } from 'lucide-react';
 import { api, jsonBody } from '@/lib/api';
 import { useQuery } from '@/lib/use-query';
@@ -116,9 +118,14 @@ export function ExamManagement({ notify }: { notify: Notify }) {
         title="Đề thi & kiểm tra"
         description="Thiết kế bài đánh giá phù hợp, từ từng câu hỏi đến trải nghiệm làm bài."
         action={
-          <button className="btn btn-primary" onClick={() => setEditor('new')}>
-            <Plus size={18} /> Tạo đề thi
-          </button>
+          <div className="ai-heading-actions">
+            <Link className="btn btn-secondary" href="/ai-exams">
+              <Sparkles size={17} /> Tạo bằng AI
+            </Link>
+            <button className="btn btn-primary" onClick={() => setEditor('new')}>
+              <Plus size={18} /> Tạo đề thi
+            </button>
+          </div>
         }
       />
       <div className="exam-builder-banner">

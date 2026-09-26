@@ -34,5 +34,16 @@ export async function ensureIndexes(db: Db) {
       },
     ),
     c.aiGenerations.createIndex({ status: 1, leaseUntil: 1, createdAt: 1 }),
+    c.aiExams.createIndex({ ownerId: 1, createdAt: -1 }),
+    c.aiExams.createIndex({ ownerId: 1, requestId: 1 }, { unique: true }),
+    c.aiExams.createIndex(
+      { ownerId: 1 },
+      {
+        unique: true,
+        name: 'one_active_ai_exam_per_owner',
+        partialFilterExpression: { status: { $in: ['QUEUED', 'WORKING'] } },
+      },
+    ),
+    c.aiExams.createIndex({ status: 1, leaseUntil: 1, createdAt: 1 }),
   ]);
 }
