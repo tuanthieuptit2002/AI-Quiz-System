@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import './questions.css';
 @import './exams.css';
+@import './ai.css';
 
 :root {
   --background: #f7f9fa;

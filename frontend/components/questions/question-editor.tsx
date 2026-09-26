@@ -22,26 +22,29 @@ export function QuestionEditor({
   metadata,
   close,
   saved,
+  review,
 }: {
   initial: Question | null;
   metadata: QuestionMetadata | null;
   close: () => void;
   saved: (question: Question) => void;
+  review?: { content: QuestionContent; save: (content: QuestionContent) => Promise<void> };
 }) {
+  const seed = review?.content || initial;
   const [value, setValue] = useState<QuestionContent>(
-    initial
+    seed
       ? {
-          ...contentOf(initial),
+          ...contentOf(seed),
           options:
-            initial.type === 'ORDERING'
-              ? initial.answers.map((id) => initial.options.find((o) => o.id === id)!)
-              : initial.options,
+            seed.type === 'ORDERING'
+              ? seed.answers.map((id) => seed.options.find((o) => o.id === id)!)
+              : seed.options,
         }
       : emptyQuestion(),
   );
-  const [topic, setTopic] = useState(initial?.topicPath.join(' / ') || '');
-  const [tags, setTags] = useState(initial?.tags.join(', ') || '');
-  const [answerText, setAnswerText] = useState(initial?.answers.join('\n') || '');
+  const [topic, setTopic] = useState(seed?.topicPath.join(' / ') || '');
+  const [tags, setTags] = useState(seed?.tags.join(', ') || '');
+  const [answerText, setAnswerText] = useState(seed?.answers.join('\n') || '');
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -122,6 +125,11 @@ export function QuestionEditor({
         .filter(Boolean),
     };
     try {
+      if (review) {
+        await review.save({ ...content, status: 'DRAFT' });
+        setDirty(false);
+        return;
+      }
       const result = await api<Question>(`/questions${initial ? `/${initial.id}` : ''}`, {
         method: initial ? 'PUT' : 'POST',
         body: jsonBody(initial ? { content, version: initial.version, note } : content),
@@ -144,15 +152,19 @@ export function QuestionEditor({
     <form onSubmit={submit} className="question-editor">
       <div className="qb-editor-heading">
         <button type="button" className="btn btn-secondary" onClick={leave} disabled={busy}>
-          <ArrowLeft size={17} /> Ngân hàng
+          <ArrowLeft size={17} /> {review ? 'Chờ duyệt' : 'Ngân hàng'}
         </button>
         <div>
           <span className="eyebrow">QUESTION STUDIO</span>
-          <h1>{initial ? 'Chỉnh sửa câu hỏi' : 'Tạo câu hỏi mới'}</h1>
+          <h1>
+            {review ? 'Biên tập câu hỏi AI' : initial ? 'Chỉnh sửa câu hỏi' : 'Tạo câu hỏi mới'}
+          </h1>
           <p>
-            {initial
-              ? `Phiên bản ${initial.version} · Lưu thay đổi sẽ tạo phiên bản mới`
-              : 'Biến kiến thức thành những câu hỏi chất lượng.'}
+            {review
+              ? 'Lưu thay đổi vào hàng chờ. Câu hỏi chỉ vào ngân hàng sau khi được duyệt.'
+              : initial
+                ? `Phiên bản ${initial.version} · Lưu thay đổi sẽ tạo phiên bản mới`
+                : 'Biến kiến thức thành những câu hỏi chất lượng.'}
           </p>
         </div>
         <button className="btn btn-primary" disabled={busy || imageBusy}>
@@ -222,18 +234,20 @@ export function QuestionEditor({
                   ))}
                 </select>
               </Field>
-              <Field label="Trạng thái">
-                <select
-                  value={value.status}
-                  onChange={(e) => update('status', e.target.value as QuestionContent['status'])}
-                >
-                  {Object.entries(statusLabels).map(([key, label]) => (
-                    <option value={key} key={key}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+              {!review && (
+                <Field label="Trạng thái">
+                  <select
+                    value={value.status}
+                    onChange={(e) => update('status', e.target.value as QuestionContent['status'])}
+                  >
+                    {Object.entries(statusLabels).map(([key, label]) => (
+                      <option value={key} key={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              )}
             </div>
             <datalist id="question-subjects">
               {[...new Set(metadata?.taxonomy.map((t) => t._id.subject))].map((subject) => (
@@ -548,7 +562,7 @@ export function QuestionEditor({
                 }}
               />
             </Field>
-            {initial && (
+            {initial && !review && (
               <Field label="Ghi chú phiên bản">
                 <input
                   maxLength={300}

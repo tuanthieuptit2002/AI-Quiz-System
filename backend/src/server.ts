@@ -3,12 +3,15 @@ import { ensureIndexes } from './database/indexes.js';
 import { loadConfig } from './common/config.js';
 import { createApp } from './app.js';
 import { startExamClock } from './common/exam-runtime.js';
+import { startAIWorker } from './common/ai-runtime.js';
+import { createDeepSeekGenerator } from './common/ai-provider.js';
 
 try {
   const config = loadConfig();
   const db = await connectDatabase();
   await ensureIndexes(db);
   const stopExamClock = startExamClock(db);
+  const stopAIWorker = startAIWorker(db, createDeepSeekGenerator(config));
   const port = Number(process.env.PORT || 8080);
   const server = createApp(db, config).listen(port, () =>
     console.log(`QuizSpace API http://localhost:${port} • MongoDB connected`),
@@ -21,6 +24,7 @@ try {
   for (const signal of ['SIGTERM', 'SIGINT'])
     process.once(signal, () => {
       stopExamClock();
+      stopAIWorker();
       const timeout = setTimeout(() => process.exit(1), 10000).unref();
       server.close(async () => {
         await closeDatabase();

@@ -9,6 +9,8 @@ export interface Config {
   smtpPass: string;
   smtpFrom: string;
   mailDirectory: string;
+  deepseekApiKey?: string;
+  deepseekModel?: string;
 }
 export function loadConfig(): Config {
   const jwtSecret = process.env.JWT_SECRET || '';
@@ -27,5 +29,7 @@ export function loadConfig(): Config {
     smtpPass: process.env.SMTP_PASS || '',
     smtpFrom: process.env.SMTP_FROM || 'QuizSpace <noreply@example.com>',
     mailDirectory: process.env.MAIL_DIRECTORY || '.mail',
+    deepseekApiKey: process.env.DEEPSEEK_API_KEY?.trim() || '',
+    deepseekModel: process.env.DEEPSEEK_MODEL?.trim() || 'deepseek-flash',
   };
 }

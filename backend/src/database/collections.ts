@@ -5,6 +5,7 @@ import type { Classroom } from '../models/classroom.model.js';
 import type { ExamAttempt } from '../models/exam-attempt.model.js';
 import type { Question, QuestionVersion, QuestionImport } from '../models/question.model.js';
 import type { Exam, ExamRun } from '../models/exam.model.js';
+import type { AIGeneration } from '../models/ai-generation.model.js';
 
 export function collections(db: Db) {
   return {
@@ -17,6 +18,7 @@ export function collections(db: Db) {
     questionImports: db.collection<QuestionImport>('questionImports'),
     exams: db.collection<Exam>('exams'),
     examRuns: db.collection<ExamRun>('examRuns'),
+    aiGenerations: db.collection<AIGeneration>('aiGenerations'),
   };
 }
 

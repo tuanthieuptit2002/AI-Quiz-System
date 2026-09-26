@@ -34,6 +34,7 @@ import { HistoryPage, ProgressPage } from './workspace-learning';
 import { ProfilePage } from './workspace-profile';
 import { QuestionBank } from './workspace-questions';
 import { ExamManagement, StudentExams } from './workspace-exams';
+import { AIStudio } from './workspace-ai';
 
 export type View =
   | 'dashboard'
@@ -44,7 +45,8 @@ export type View =
   | 'progress'
   | 'profile'
   | 'questions'
-  | 'exams';
+  | 'exams'
+  | 'ai';
 export type Notify = (message: string, error?: boolean) => void;
 const navigation = [
   {
@@ -55,6 +57,7 @@ const navigation = [
   },
   { view: 'users', label: 'Người dùng', icon: Users, roles: ['ADMIN'] },
   { view: 'questions', label: 'Ngân hàng câu hỏi', icon: LibraryBig, roles: ['ADMIN', 'TEACHER'] },
+  { view: 'ai', label: 'Tạo câu hỏi AI', icon: Sparkles, roles: ['ADMIN', 'TEACHER'] },
   {
     view: 'exams',
     label: 'Đề thi & kiểm tra',
@@ -239,6 +242,7 @@ export function Workspace({ view }: { view: View }) {
               {view === 'progress' && <ProgressPage />}
               {view === 'profile' && <ProfilePage notify={notify} />}
               {view === 'questions' && <QuestionBank notify={notify} />}
+              {view === 'ai' && <AIStudio notify={notify} />}
               {view === 'exams' &&
                 (user.role === 'STUDENT' ? (
                   <StudentExams notify={notify} />

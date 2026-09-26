@@ -12,6 +12,7 @@ import { createTeacherRoutes } from './teacher.routes.js';
 import { createStudentRoutes } from './student.routes.js';
 import { createQuestionRoutes } from './question.routes.js';
 import { createExamRoutes } from './exam.routes.js';
+import { createAIRoutes } from './ai.routes.js';
 
 export function createApiRoutes(db: Db, config: Config, mailer: typeof sendResetEmail) {
   const router = Router();
@@ -24,5 +25,6 @@ export function createApiRoutes(db: Db, config: Config, mailer: typeof sendReset
   router.use('/student', auth, requireRole('STUDENT'), createStudentRoutes(c));
   router.use('/questions', auth, requireRole('ADMIN', 'TEACHER'), createQuestionRoutes(db));
   router.use('/exams', auth, createExamRoutes(db));
+  router.use('/ai', auth, requireRole('ADMIN', 'TEACHER'), createAIRoutes(db, config));
   return router;
 }

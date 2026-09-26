@@ -76,9 +76,21 @@ Mở **http://localhost:3000/questions** hoặc chọn **Ngân hàng câu hỏi*
 
 **Cần MongoDB replica set hoặc Atlas** cho các giao dịch lưu câu hỏi, phiên bản và nhập file. Workspace hiện dùng Atlas. Xem [hướng dẫn module và định dạng import](docs/question-bank.md).
 
+## AI Question Generator — DeepSeek
+
+Mở **http://localhost:3000/ai** hoặc chọn **Tạo câu hỏi AI**. Cấu hình `DEEPSEEK_API_KEY` trong `backend/.env`; `DEEPSEEK_MODEL` mặc định `deepseek-flash`.
+
+- Tạo từ chủ đề/prompt, văn bản/bài giảng, PDF có lớp văn bản, Word `.docx`, TXT hoặc URL công khai.
+- 8 dạng câu hỏi, 4 mức độ khó, Tiếng Việt/English, tối đa 50 câu mỗi đợt; câu trắc nghiệm có 4 lựa chọn.
+- Tiến độ và lịch sử lưu trong MongoDB; Teacher có thể rời trang, mở lại và tiếp tục duyệt.
+- **Approve / Edit / Regenerate / Reject**, duyệt từng câu hoặc hàng loạt. Chỉ câu đã duyệt mới vào Question Bank ở trạng thái **Sẵn sàng**, kèm version history.
+- Xem văn bản đã trích xuất trước khi gửi; đối chiếu trích đoạn nguồn khi duyệt. PDF scan cần OCR trước; file tối đa 8 MB, nguồn tối đa 60.000 ký tự.
+
+Key chỉ dùng ở backend. Xem [hướng dẫn cấu hình, giới hạn và API AI](docs/ai-question-generator.md).
+
 ## Dữ liệu học tập
 
-MongoDB có các collection `users`, `sessions`, `classes`, `examAttempts`. Unique/TTL index được tạo khi server khởi động.
+Các collection chính: `users`, `sessions`, `classes`, `questions`, `questionVersions`, `exams`, `examRuns`, `examAttempts` và `aiGenerations`. Unique/TTL index được tạo khi server khởi động.
 
 Lịch sử và tiến độ đọc dữ liệu thật từ `examAttempts`, không tạo điểm mẫu. Khi bài thi được chấm xong, backend ghi kết quả vào collection này (thang điểm 10). Bài có tự luận chưa chấm đủ không được tính vào tiến độ. Học sinh không thể tự gửi điểm.
 
@@ -125,20 +137,20 @@ npm start
 
 Dừng các dev server trước khi chạy `npm start` trên cùng cổng.
 Test dùng MongoDB tạm qua `mongodb-memory-server`, không sửa dữ liệu Atlas. Lần đầu có thể tải MongoDB binary.
-Kiểm tra gồm đăng ký, JWT, refresh rotation/replay, khóa tài khoản, reset mật khẩu, avatar, quyền lớp học và cô lập lịch sử/tiến độ.
+Kiểm tra gồm tài khoản/RBAC, Question Bank, import/export, Exam Builder, làm bài/chấm điểm và AI Generator (đọc tài liệu, bảo vệ URL, job nhiều nhóm, duyệt đồng thời và khôi phục khi lỗi). AI trong test tự động được giả lập, không gọi API tính phí.
 
 ## Cấu trúc
 
 - `backend/src/app.ts`: lắp ghép middleware và routes; `server.ts` khởi động server.
-- `backend/src/routes`: khai báo đường dẫn API theo auth, profile, admin, teacher, student.
+- `backend/src/routes`: khai báo đường dẫn API theo auth, profile, admin, teacher, student, questions, exams, ai.
 - `backend/src/controllers`: xử lý request theo từng nhóm tính năng.
 - `backend/src/middleware`: xác thực, phân quyền, kiểm tra request, giới hạn tần suất và xử lý lỗi.
 - `backend/src/models`: kiểu dữ liệu MongoDB và hàm chuyển dữ liệu trả về client.
 - `backend/src/database`: kết nối MongoDB, collections và indexes.
-- `backend/src/common`: cấu hình, validation, tiện ích JWT/password/cookie, email và tạo user.
+- `backend/src/common`: cấu hình, validation, tiện ích JWT/password/cookie, email, chấm thi, DeepSeek adapter, AI worker và bộ đọc nguồn tài liệu.
 - `backend/scripts`: script kiểm tra database và tạo admin.
 - `backend/test`: kiểm thử tích hợp API.
-- `frontend/app`: các route đăng nhập, dashboard, users, classes, students, history, progress, profile.
+- `frontend/app`: các route tài khoản, dashboard, classes, questions, exams, ai và tiến độ học.
 - `frontend/components`: giao diện theo vai trò và các form quản lý.
 - `frontend/lib/api.ts`: access token trong bộ nhớ và refresh cookie.
 
