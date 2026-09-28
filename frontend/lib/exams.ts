@@ -7,7 +7,7 @@ export const examStatusLabels = {
 export const runStatusLabels = {
   RUNNING: 'Đang làm',
   SUBMITTED: 'Đã chấm',
-  PENDING_REVIEW: 'Chờ chấm tự luận',
+  PENDING_REVIEW: 'Chờ Teacher chấm',
   EXPIRED: 'Hết hạn, chưa nộp',
 };
 export interface ExamSettings {
@@ -78,6 +78,7 @@ export interface RunQuestion {
   locked?: boolean;
 }
 export interface ExamRun extends RunSummary {
+  grading: GradingSummary | null;
   examId: string;
   title: string;
   subject: string;
@@ -95,6 +96,17 @@ export interface ExamRun extends RunSummary {
   serverTime: string;
   questionCount: number;
   answered: boolean[];
+}
+export interface GradingSummary {
+  earnedPoints: number;
+  totalPoints: number;
+  correct: number;
+  incorrect: number;
+  partial: number;
+  pending: number;
+  unanswered: number;
+  durationSeconds: number;
+  final: boolean;
 }
 export interface ExamAudience {
   classes: { id: string; name: string; subject: string; count: number }[];

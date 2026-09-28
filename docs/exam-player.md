@@ -5,7 +5,7 @@
 1. Teacher phát hành đề từ Exam Builder, cấu hình lịch, thời lượng, đối tượng và quyền điều hướng.
 2. Student vào **Bài thi của tôi** (`/exams`), nhập mã truy cập nếu đề yêu cầu, chọn **Bắt đầu** hoặc tiếp tục lượt đang làm.
 3. Phòng thi mở tại `/exam/[runId]`, có giao diện riêng, phù hợp desktop và mobile.
-4. Chọn **Nộp bài**, kiểm tra số câu chưa trả lời/đã đánh dấu rồi xác nhận. Kết quả và đáp án hiển thị theo cấu hình đề; tự luận có thể chờ Teacher chấm.
+4. Chọn **Nộp bài**, kiểm tra số câu chưa trả lời/đã đánh dấu rồi xác nhận. Kết quả và đáp án hiển thị theo cấu hình đề; tự luận và trả lời ngắn có nội dung chờ Teacher chấm. Xem [Auto Grading](auto-grading.md) để biết quy tắc và cách Teacher dùng trợ lý AI.
 
 Không cần thêm biến môi trường hoặc dependency. Dùng phiên đăng nhập, MongoDB và Exam Builder hiện có.
 

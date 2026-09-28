@@ -38,6 +38,7 @@ function fixture(allowBack = true) {
     subject: 'Java',
     attemptNo: 1,
     status: 'RUNNING',
+    grading: null,
     settings: { showAnswers: false, allowBack, autoSubmit: true, passScore: 70 },
     questions,
     responses: [[], [], []],

@@ -3,6 +3,7 @@ import type { Db, ObjectId, ClientSession } from 'mongodb';
 import { collections } from '../database/collections.js';
 import type { DeliveredQuestion, Exam, ExamRun } from '../models/exam.model.js';
 import { httpError } from './http.js';
+import { isWrittenQuestion } from './grading-provider.js';
 
 export function shuffle<T>(values: T[]): T[] {
   const result = [...values];
@@ -52,11 +53,7 @@ export function deliverQuestions(exam: Exam): DeliveredQuestion[] {
 const normalize = (s: string) =>
   s.normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('vi');
 export function gradeQuestion(q: DeliveredQuestion, response: string[]): number | null {
-  if (q.type === 'ESSAY') return response.some((s) => s.trim()) ? null : 0;
-  if (q.type === 'SHORT_ANSWER')
-    return response.length === 1 && q.correct.some((s) => normalize(s) === normalize(response[0]))
-      ? q.points
-      : 0;
+  if (isWrittenQuestion(q.type)) return response.some((s) => s.trim()) ? null : 0;
   const answers = q.type === 'FILL_BLANK' ? response.map(normalize) : [...response];
   const expected = q.type === 'FILL_BLANK' ? q.correct.map(normalize) : [...q.correct];
   if (q.type === 'MULTIPLE_CHOICE') {
@@ -76,6 +73,35 @@ export function resultOf(run: ExamRun) {
     scorePercent: pending ? null : Math.round(percent * 100) / 100,
     passed: pending ? null : percent >= run.settings.passScore,
     status: pending ? ('PENDING_REVIEW' as const) : ('SUBMITTED' as const),
+  };
+}
+export function gradingSummary(run: ExamRun) {
+  if (!['SUBMITTED', 'PENDING_REVIEW'].includes(run.status)) return null;
+  const round = (n: number) => Math.round(n * 100) / 100;
+  const counts = { correct: 0, incorrect: 0, partial: 0, pending: 0, unanswered: 0 };
+  run.questions.forEach((q, i) => {
+    const points = run.awarded[i];
+    if (!run.responses[i].some((s) => s.trim())) counts.unanswered++;
+    if (points === null || points === undefined) counts.pending++;
+    else if (points >= q.points) counts.correct++;
+    else if (points > 0) counts.partial++;
+    else counts.incorrect++;
+  });
+  return {
+    ...counts,
+    earnedPoints: round(run.awarded.reduce<number>((sum, n) => sum + (n || 0), 0)),
+    totalPoints: round(run.questions.reduce((sum, q) => sum + q.points, 0)),
+    durationSeconds: run.submittedAt
+      ? Math.max(
+          0,
+          Math.floor(
+            (Math.min(run.submittedAt.getTime(), run.expiresAt.getTime()) -
+              run.startedAt.getTime()) /
+              1000,
+          ),
+        )
+      : 0,
+    final: run.status === 'SUBMITTED',
   };
 }
 export async function transaction<T>(db: Db, fn: (session: ClientSession) => Promise<T>) {
@@ -182,6 +208,7 @@ export function runDto(run: ExamRun, teacher = false) {
     flagged: run.questions.map((_, i) => run.flagged?.[i] || false),
     scorePercent: run.scorePercent,
     passed: run.passed,
+    grading: gradingSummary(run),
     serverTime: new Date(),
     questionCount: run.questions.length,
     answered: run.responses.map((r, i) => responseAnswered(run.questions[i], r)),

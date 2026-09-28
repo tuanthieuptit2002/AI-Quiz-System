@@ -23,6 +23,28 @@ export async function ensureIndexes(db: Db) {
     c.examRuns.createIndex({ examId: 1, studentId: 1, attemptNo: 1 }, { unique: true }),
     c.examRuns.createIndex({ studentId: 1, startedAt: -1 }),
     c.examRuns.createIndex({ status: 1, expiresAt: 1 }),
+    c.gradingSuggestions.createIndex({ ownerId: 1, requestId: 1 }, { unique: true }),
+    c.gradingSuggestions.createIndex({ ownerId: 1, createdAt: -1 }),
+    c.gradingSuggestions.createIndex({ runId: 1, index: 1, createdAt: -1 }),
+    c.gradingSuggestions.createIndex({ status: 1, leaseUntil: 1, createdAt: 1 }),
+    c.gradingSuggestions.createIndex(
+      { ownerId: 1 },
+      {
+        unique: true,
+        name: 'one_active_grading_job_per_owner',
+        partialFilterExpression: { status: { $in: ['QUEUED', 'GENERATING'] } },
+      },
+    ),
+    c.gradingSuggestions.createIndex(
+      { runId: 1, index: 1 },
+      {
+        unique: true,
+        name: 'one_active_grading_job_per_question',
+        partialFilterExpression: { status: { $in: ['QUEUED', 'GENERATING'] } },
+      },
+    ),
+    c.gradingEvents.createIndex({ runId: 1, createdAt: -1 }),
+    c.gradingEvents.createIndex({ runId: 1, revision: 1, index: 1 }, { unique: true }),
     c.aiGenerations.createIndex({ ownerId: 1, createdAt: -1 }),
     c.aiGenerations.createIndex({ ownerId: 1, requestId: 1 }, { unique: true }),
     c.aiGenerations.createIndex(

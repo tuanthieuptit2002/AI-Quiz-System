@@ -7,6 +7,8 @@ import { startAIWorker } from './common/ai-runtime.js';
 import { startAIExamWorker } from './common/ai-exam-runtime.js';
 import { createExamPlanner } from './common/ai-exam-provider.js';
 import { createDeepSeekGenerator } from './common/ai-provider.js';
+import { createDeepSeekGrader } from './common/grading-provider.js';
+import { startGradingWorker } from './common/grading-runtime.js';
 
 try {
   const config = loadConfig();
@@ -14,6 +16,7 @@ try {
   await ensureIndexes(db);
   const stopExamClock = startExamClock(db);
   const stopAIWorker = startAIWorker(db, createDeepSeekGenerator(config));
+  const stopGrading = startGradingWorker(db, createDeepSeekGrader(config));
   const stopAIExams = startAIExamWorker(
     db,
     createExamPlanner(config),
@@ -33,6 +36,7 @@ try {
       stopExamClock();
       stopAIWorker();
       stopAIExams();
+      stopGrading();
       const timeout = setTimeout(() => process.exit(1), 10000).unref();
       server.close(async () => {
         await closeDatabase();

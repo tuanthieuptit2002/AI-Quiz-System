@@ -7,6 +7,7 @@ import type { Question, QuestionVersion, QuestionImport } from '../models/questi
 import type { Exam, ExamRun } from '../models/exam.model.js';
 import type { AIExamJob } from '../models/ai-exam.model.js';
 import type { AIGeneration } from '../models/ai-generation.model.js';
+import type { GradingSuggestion, GradingEvent } from '../models/grading.model.js';
 
 export function collections(db: Db) {
   return {
@@ -21,6 +22,8 @@ export function collections(db: Db) {
     examRuns: db.collection<ExamRun>('examRuns'),
     aiGenerations: db.collection<AIGeneration>('aiGenerations'),
     aiExams: db.collection<AIExamJob>('aiExams'),
+    gradingSuggestions: db.collection<GradingSuggestion>('gradingSuggestions'),
+    gradingEvents: db.collection<GradingEvent>('gradingEvents'),
   };
 }
 

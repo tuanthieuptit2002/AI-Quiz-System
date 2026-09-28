@@ -36,7 +36,7 @@ import {
 import { Empty, ErrorBox, Field, Loading, Modal, SectionTitle, Spinner } from './ui';
 import type { Notify } from './workspace';
 import { ExamEditor } from './exams/exam-editor';
-import { RunResult } from './exams/exam-player';
+import { TeacherGrading } from './exams/teacher-grading';
 import { QuestionPreview } from './questions/question-preview';
 
 export function ExamManagement({ notify }: { notify: Notify }) {
@@ -434,10 +434,9 @@ function ExamSubmissions({ exam, close }: { exam: Exam; close: () => void }) {
   }
   if (run)
     return (
-      <RunResult
-        key={`${run.id}-${run.revision}`}
+      <TeacherGrading
+        key={run.id}
         run={run}
-        teacher
         changed={(value) => {
           setRun(value);
           list.reload();
@@ -450,7 +449,7 @@ function ExamSubmissions({ exam, close }: { exam: Exam; close: () => void }) {
       <SectionTitle
         eyebrow="RESULTS & FEEDBACK"
         title={exam.title}
-        description="Theo dõi lượt thi, xem bài làm và chấm câu tự luận."
+        description="Theo dõi lượt thi, chấm tự luận và trả lời ngắn với trợ lý AI."
         action={
           <button className="btn btn-secondary" onClick={close}>
             <ArrowLeft size={16} /> Đề thi

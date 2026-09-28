@@ -3,9 +3,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import {
   ArrowDown,
-  ArrowLeft,
   ArrowUp,
-  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock3,
@@ -19,11 +17,12 @@ import {
   ListChecks,
   X,
 } from 'lucide-react';
-import { api, jsonBody } from '@/lib/api';
-import { runStatusLabels, type ExamRun, type RunQuestion } from '@/lib/exams';
+import { type ExamRun, type RunQuestion } from '@/lib/exams';
 import { typeLabels } from '@/lib/questions';
 import { ErrorBox, Spinner, Modal } from '../ui';
 import { useExamSession } from './use-exam-session';
+import { RunResult } from './exam-result';
+import { readableAnswer as readable } from '@/lib/grading';
 
 function AnswerInput({
   q,
@@ -171,176 +170,6 @@ function AnswerInput({
     />
   );
 }
-function readable(q: RunQuestion, values: string[]) {
-  return values
-    .map(
-      (v, i) =>
-        `${q.type === 'MATCHING' ? `${q.left?.[i]?.text} → ` : ''}${q.options?.find((o) => o.id === v)?.text || v || '(trống)'}`,
-    )
-    .join(q.type === 'ORDERING' ? ' → ' : '\n');
-}
-export function RunResult({
-  run,
-  close,
-  teacher = false,
-  changed,
-}: {
-  run: ExamRun;
-  close: () => void;
-  teacher?: boolean;
-  changed?: (value: ExamRun) => void;
-}) {
-  const [grades, setGrades] = useState<Record<number, string>>({});
-  const [feedback, setFeedback] = useState<Record<number, string>>({});
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  async function grade() {
-    setBusy(true);
-    setError('');
-    try {
-      const entries = run.questions.flatMap((q, index) =>
-        q.type === 'ESSAY' && (grades[index] ?? String(run.awarded[index] ?? '')) !== ''
-          ? [
-              {
-                index,
-                points: Number(grades[index] ?? run.awarded[index]),
-                feedback: feedback[index] ?? run.feedback[index] ?? '',
-              },
-            ]
-          : [],
-      );
-      if (!entries.length) throw new Error('Nhập điểm cho ít nhất một câu tự luận.');
-      changed?.(
-        await api<ExamRun>(`/exams/${run.examId}/submissions/${run.id}/grade`, {
-          method: 'POST',
-          body: jsonBody({ revision: run.revision, grades: entries }),
-        }),
-      );
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <div className="exam-result">
-      <div className="exam-result-heading">
-        <button className="btn btn-secondary" onClick={close}>
-          <ArrowLeft size={16} /> Quay lại
-        </button>
-        <span className={`qb-badge ${run.passed ? 'difficulty-easy' : 'difficulty-medium'}`}>
-          {runStatusLabels[run.status]}
-        </span>
-      </div>
-      <section className="panel exam-result-summary">
-        <CheckCircle2 size={40} />
-        <div>
-          <h1>{run.title}</h1>
-          <p>
-            {run.studentName} · Lượt {run.attemptNo}
-          </p>
-        </div>
-        <div className="exam-result-score">
-          <strong>{run.scorePercent === null ? '—' : `${run.scorePercent}%`}</strong>
-          <span>
-            {run.status === 'PENDING_REVIEW'
-              ? 'Đang chờ chấm tự luận'
-              : run.status === 'EXPIRED'
-                ? 'Hết giờ khi chưa nộp bài'
-                : run.passed
-                  ? 'Đạt yêu cầu'
-                  : run.passed === false
-                    ? 'Chưa đạt'
-                    : 'Đang làm bài'}
-          </span>
-        </div>
-      </section>
-      {!run.settings.showAnswers && !teacher && (
-        <p className="exam-result-note">Đề thi này không công khai đáp án sau khi nộp.</p>
-      )}
-      <div className="exam-review-list">
-        {run.questions.map(
-          (q, i) =>
-            !q.locked && (
-              <section className="panel exam-review-item" key={q.id}>
-                <div className="exam-review-label">
-                  <b>
-                    Câu {i + 1} · {typeLabels[q.type]}
-                  </b>
-                  <span>
-                    {run.awarded[i] === null ? 'Chờ chấm' : (run.awarded[i] ?? '—')} / {q.points}{' '}
-                    điểm
-                  </span>
-                </div>
-                <h3>{q.question}</h3>
-                {q.image && (
-                  <Image
-                    className="question-image"
-                    src={q.image}
-                    alt={q.imageAlt}
-                    width={1000}
-                    height={600}
-                    unoptimized
-                  />
-                )}
-                <div className="exam-response-text">
-                  <small>BÀI LÀM</small>
-                  <p>{readable(q, run.responses[i]) || 'Chưa trả lời'}</p>
-                </div>
-                {q.correct && (
-                  <div className="answer-explanation">
-                    <b>{q.type === 'ESSAY' ? 'Hướng dẫn chấm' : 'Đáp án đúng'}</b>
-                    <p>{q.type === 'ESSAY' ? q.rubric : readable(q, q.correct)}</p>
-                    {q.explanation && <p>{q.explanation}</p>}
-                  </div>
-                )}
-                {run.feedback[i] && <p className="exam-result-note">Nhận xét: {run.feedback[i]}</p>}
-                {teacher &&
-                  q.type === 'ESSAY' &&
-                  ['PENDING_REVIEW', 'SUBMITTED'].includes(run.status) && (
-                    <div className="exam-grade-fields">
-                      <label className="field">
-                        <span>Điểm tự luận (tối đa {q.points})</span>
-                        <input
-                          type="number"
-                          min={0}
-                          max={q.points}
-                          step="0.1"
-                          value={
-                            grades[i] ?? (run.awarded[i] === null ? '' : String(run.awarded[i]))
-                          }
-                          onChange={(e) => setGrades({ ...grades, [i]: e.target.value })}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Nhận xét</span>
-                        <textarea
-                          rows={2}
-                          maxLength={2000}
-                          value={feedback[i] ?? run.feedback[i] ?? ''}
-                          onChange={(e) => setFeedback({ ...feedback, [i]: e.target.value })}
-                        />
-                      </label>
-                    </div>
-                  )}
-              </section>
-            ),
-        )}
-      </div>
-      <ErrorBox message={error} />
-      {teacher &&
-        run.questions.some((q) => q.type === 'ESSAY') &&
-        ['PENDING_REVIEW', 'SUBMITTED'].includes(run.status) && (
-          <div className="qb-editor-footer">
-            <button className="btn btn-primary" disabled={busy} onClick={grade}>
-              {busy ? <Spinner /> : <CheckCircle2 size={16} />} Lưu điểm tự luận
-            </button>
-          </div>
-        )}
-    </div>
-  );
-}
-
 export function ExamPlayer({
   initial,
   ownerId,

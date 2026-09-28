@@ -25,7 +25,7 @@ export function createApiRoutes(db: Db, config: Config, mailer: typeof sendReset
   router.use('/teacher', auth, requireRole('TEACHER'), createTeacherRoutes(c));
   router.use('/student', auth, requireRole('STUDENT'), createStudentRoutes(c));
   router.use('/questions', auth, requireRole('ADMIN', 'TEACHER'), createQuestionRoutes(db));
-  router.use('/exams', auth, createExamRoutes(db));
+  router.use('/exams', auth, createExamRoutes(db, config));
   router.use('/ai-exams', auth, requireRole('ADMIN', 'TEACHER'), createAIExamRoutes(db, config));
   router.use('/ai', auth, requireRole('ADMIN', 'TEACHER'), createAIRoutes(db, config));
   return router;

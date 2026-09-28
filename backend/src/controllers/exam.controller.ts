@@ -12,7 +12,7 @@ import {
   type Question,
 } from '../models/question.model.js';
 import { examDto, type Exam, type ExamQuestion } from '../models/exam.model.js';
-import { resultOf, runDto, transaction, writeResult } from '../common/exam-runtime.js';
+import { runDto } from '../common/exam-runtime.js';
 
 export function createExamController(db: Db) {
   const c = collections(db);
@@ -319,47 +319,6 @@ export function createExamController(db: Db) {
     if (!run) httpError(404, 'Không tìm thấy bài làm.');
     res.json(runDto(run, true));
   };
-  const grade: RequestHandler = async (req, res) => {
-    const exam = await owned(req);
-    const body = z
-      .object({
-        revision: z.number().int().min(0),
-        grades: z
-          .array(
-            z.object({
-              index: z.number().int().min(0),
-              points: z.number().min(0),
-              feedback: z.string().max(2000).default(''),
-            }),
-          )
-          .min(1)
-          .max(100),
-      })
-      .strict()
-      .parse(req.body);
-    const run = await transaction(db, async (session) => {
-      const run = await c.examRuns.findOne(
-        { _id: objectId(req.params.runId), examId: exam._id },
-        { session },
-      );
-      if (!run) httpError(404, 'Không tìm thấy bài làm.');
-      if (!['PENDING_REVIEW', 'SUBMITTED'].includes(run.status) || run.revision !== body.revision)
-        httpError(409, 'Bài làm chưa nộp hoặc đã được cập nhật.');
-      for (const g of body.grades) {
-        const q = run.questions[g.index];
-        if (!q || q.type !== 'ESSAY' || g.points > q.points)
-          httpError(400, 'Chỉ chấm câu tự luận, điểm không vượt điểm tối đa.');
-        run.awarded[g.index] = g.points;
-        run.feedback[g.index] = g.feedback;
-      }
-      Object.assign(run, resultOf(run));
-      run.revision++;
-      await c.examRuns.replaceOne({ _id: run._id }, run, { session });
-      await writeResult(db, run, session);
-      return run;
-    });
-    res.json(runDto(run!, true));
-  };
   return {
     list,
     get,
@@ -372,6 +331,5 @@ export function createExamController(db: Db) {
     audience,
     submissions,
     review,
-    grade,
   };
 }

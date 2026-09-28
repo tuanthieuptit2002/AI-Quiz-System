@@ -504,7 +504,7 @@ test('Exam builder and delivery enforce access, timing, randomization and gradin
                   ? ['Essay']
                   : q.correct,
             ),
-            q.type === 'ESSAY' ? null : 1,
+            ['ESSAY', 'SHORT_ANSWER'].includes(q.type) ? null : 1,
           );
           if (q.type === 'MATCHING')
             assert.ok(q.left.every((l) => !q.options.some((r) => r.id === l.id)));

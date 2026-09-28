@@ -47,11 +47,13 @@ Chọn bài thi, đọc hướng dẫn, nhập mã nếu có rồi xác nhận b
 
 ## Chấm điểm
 
-Câu một/nhiều lựa chọn, đúng/sai, ghép cặp, sắp xếp và điền từ chấm toàn bộ đúng mới được đủ điểm, không có điểm thành phần. Trả lời ngắn chấp nhận một trong các đáp án đã khai báo. Điền từ/trả lời ngắn chuẩn hóa Unicode NFKC, bỏ khoảng trắng đầu/cuối, gộp khoảng trắng và không phân biệt hoa/thường; không loại bỏ dấu tiếng Việt và không chấm theo ngữ nghĩa AI.
+Câu một/nhiều lựa chọn, đúng/sai, ghép cặp, sắp xếp và điền từ chấm toàn bộ đúng mới được đủ điểm, không có điểm thành phần. Điền từ chuẩn hóa Unicode NFKC, bỏ khoảng trắng đầu/cuối, gộp khoảng trắng và không phân biệt hoa/thường; không loại bỏ dấu tiếng Việt.
 
-Tự luận có nội dung chuyển thành **Chờ chấm tự luận**; bài trống được 0. Teacher mở **Bài làm → Xem/chấm**, nhập điểm không vượt điểm câu và nhận xét. Chỉ khi mọi câu đã chấm mới có tổng điểm và kết quả đạt/chưa đạt.
+Từ module Auto Grading, tự luận và trả lời ngắn có nội dung chuyển thành **Chờ Teacher chấm**; bài trống được 0. Teacher mở **Bài làm → Xem/chấm**, nhập điểm không vượt điểm câu và nhận xét, có thể tham khảo AI trước khi xác nhận. Trả lời ngắn dùng các đáp án đã khai báo làm tham chiếu để Teacher đánh giá cách diễn đạt tương đương. Chỉ khi mọi câu đã chấm mới có tổng điểm chính thức và kết quả đạt/chưa đạt. Những lượt đã chấm trước khi cập nhật vẫn giữ điểm cũ cho đến khi Teacher chủ động sửa.
 
 Điểm phần trăm = tổng điểm đạt / tổng điểm tối đa × 100. So sánh với ngưỡng pass score; lịch sử/tiến độ hiển thị điểm quy đổi thang 10. Nộp lại request không tạo kết quả trùng; sửa điểm tự luận cập nhật cùng kết quả.
+
+Chi tiết đề xuất AI, lịch sử xác nhận và API mở rộng: [Auto Grading](auto-grading.md).
 
 ## API
 

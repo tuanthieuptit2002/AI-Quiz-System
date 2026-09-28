@@ -102,9 +102,9 @@ Xem [hướng dẫn AI Exam Generator](docs/ai-exam-generator.md) về quy tắc
 
 ## Dữ liệu học tập
 
-Các collection chính: `users`, `sessions`, `classes`, `questions`, `questionVersions`, `exams`, `examRuns`, `examAttempts`, `aiGenerations` và `aiExams`. Unique/TTL index được tạo khi server khởi động.
+Các collection chính: `users`, `sessions`, `classes`, `questions`, `questionVersions`, `exams`, `examRuns`, `examAttempts`, `aiGenerations`, `aiExams`, `gradingSuggestions` và `gradingEvents`. Unique/TTL index được tạo khi server khởi động.
 
-Lịch sử và tiến độ đọc dữ liệu thật từ `examAttempts`, không tạo điểm mẫu. Khi bài thi được chấm xong, backend ghi kết quả vào collection này (thang điểm 10). Bài có tự luận chưa chấm đủ không được tính vào tiến độ. Học sinh không thể tự gửi điểm.
+Lịch sử và tiến độ đọc dữ liệu thật từ `examAttempts`, không tạo điểm mẫu. Khi bài thi được chấm xong, backend ghi kết quả vào collection này (thang điểm 10). Bài có tự luận/trả lời ngắn chưa chấm đủ không được tính vào tiến độ. Học sinh không thể tự gửi điểm.
 
 ## Exam Builder — tạo đề và làm bài
 
@@ -115,7 +115,7 @@ Mở **http://localhost:3000/exams**. Admin/Teacher tạo đề, Student xem cá
 - Mã truy cập lưu bằng bcrypt; giới hạn theo lớp hoặc học sinh. Teacher chỉ giao cho lớp/học sinh mình quản lý, hoặc chọn tất cả Student.
 - Quy trình **Bản nháp → Xem trước → Phát hành**. Đề lưu snapshot câu hỏi; đề đã phát hành không sửa trực tiếp, có thể nhân bản thành đề mới.
 - Student làm đủ 8 dạng câu hỏi, tự lưu câu trả lời, tiếp tục lượt đang làm. Backend kiểm tra deadline, giới hạn lượt và quyền điều hướng; tự nộp phần đã lưu dù đóng trình duyệt.
-- Chấm tự động 7 dạng, tự luận chờ Teacher chấm. Điểm hoàn tất đồng bộ sang lịch sử và tiến độ.
+- Chấm tự động 6 dạng khách quan; tự luận và trả lời ngắn có nội dung chờ Teacher xác nhận. Điểm hoàn tất đồng bộ sang lịch sử và tiến độ.
 
 Chi tiết quy tắc, giới hạn và API: [docs/exam-builder.md](docs/exam-builder.md).
 
@@ -130,6 +130,17 @@ Chi tiết quy tắc, giới hạn và API: [docs/exam-builder.md](docs/exam-bui
 - Xác nhận trước khi nộp, đồng bộ đáp án trước khi chấm; máy chủ quyết định deadline và xử lý hết giờ theo cấu hình đề.
 
 Đáp án chưa tới máy chủ trước deadline không được tính. Bản nháp chưa đồng bộ chỉ giữ trong tab hiện tại; không hỗ trợ mở phòng thi lần đầu khi hoàn toàn offline. Xem [hướng dẫn Exam Player](docs/exam-player.md).
+
+## Auto Grading — chấm bài và trợ lý AI
+
+Teacher/Admin vào **Đề thi → Bài làm → Xem / chấm**. Student xem kết quả ngay sau khi nộp hoặc mở lại lượt thi.
+
+- Câu khách quan được chấm ngay khi nộp. Kết quả hiển thị điểm đạt/tối đa, phần trăm, số câu đúng/sai/điểm một phần/chờ chấm và thời gian làm bài.
+- Essay và Short Answer có nội dung chờ Teacher chấm. Nhập điểm và nhận xét theo đáp án/rubric, xác nhận từng câu; chỉ khi chấm đủ mới công bố tổng điểm chính thức và cập nhật tiến độ.
+- **DeepSeek chỉ đề xuất:** điểm, lý do, điểm tốt, điều cần cải thiện và trích đoạn bài làm. Teacher có thể bỏ qua, yêu cầu lại hoặc đưa vào bản chấm để sửa rồi xác nhận. AI không tự ghi điểm.
+- Lịch sử lưu người chấm, điểm/nhận xét trước và sau, cùng điểm AI đề xuất nếu được tham khảo. Sửa điểm cập nhật cùng kết quả; revision ngăn ghi đè giữa các tab.
+
+Dùng `DEEPSEEK_API_KEY` và `DEEPSEEK_MODEL` hiện có. Không cấu hình AI vẫn chấm thủ công được. Xem [hướng dẫn Auto Grading](docs/auto-grading.md).
 
 ## Cấu hình
 
@@ -163,6 +174,7 @@ Dừng các dev server trước khi chạy `npm start` trên cùng cổng.
 Test dùng MongoDB tạm qua `mongodb-memory-server`, không sửa dữ liệu Atlas. Lần đầu có thể tải MongoDB binary.
 Kiểm tra gồm tài khoản/RBAC, Question Bank, import/export, Exam Builder, làm bài/chấm điểm và AI Generator (đọc tài liệu, bảo vệ URL, job nhiều nhóm, duyệt đồng thời và khôi phục khi lỗi). AI trong test tự động được giả lập, không gọi API tính phí.
 Exam Player có thêm kiểm thử bản nháp, mất phản hồi, đồng bộ khi có mạng, xung đột đáp án, điều hướng tuần tự và hết giờ.
+Auto Grading kiểm tra điểm có trọng số, xác nhận của Teacher, lịch sử sửa điểm, quyền truy cập, job AI/lease, thử lại và dữ liệu AI không hợp lệ.
 
 ## Cấu trúc
 
