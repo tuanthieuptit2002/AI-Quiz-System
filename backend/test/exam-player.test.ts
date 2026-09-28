@@ -35,7 +35,7 @@ test('Exam Player API: flags, retries, sequential rules and final submit revisio
         smtpFrom: '',
         mailDirectory: '',
       },
-      { rateLimits: false },
+      { rateLimits: false, requireEmailVerification: false },
     );
   const post = (url: string, token = '') =>
     request(app)

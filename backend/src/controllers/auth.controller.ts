@@ -6,7 +6,7 @@ import { OAuth2Client } from 'google-auth-library';
 import type { Response } from 'express';
 import type { Config } from '../common/config.js';
 import type { sendResetEmail } from '../common/mail.js';
-import { userDto, type User } from '../models/user.model.js';
+import { emailIsVerified, userDto, type User } from '../models/user.model.js';
 import { createUser } from '../common/user.js';
 import { emailSchema, nameSchema, passwordSchema } from '../common/validation.js';
 import { httpError } from '../common/http.js';
@@ -21,10 +21,13 @@ import {
   REFRESH_COOKIE,
 } from '../common/security.js';
 
+const VERIFY_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 export function createAuthController(
   c: Collections,
   config: Config,
   mailer: typeof sendResetEmail,
+  requireEmailVerification = true,
 ) {
   const google = new OAuth2Client(config.googleClientId);
   const startSession = async (user: User, res: Response) => {
@@ -55,12 +58,55 @@ export function createAuthController(
         name: nameSchema,
         email: emailSchema,
         password: passwordSchema,
+        confirmPassword: z.string().max(72).optional(),
         role: z.enum(['TEACHER', 'STUDENT']).default('STUDENT'),
       })
       .strict()
+      .superRefine((value, ctx) => {
+        const mismatch =
+          requireEmailVerification || value.confirmPassword !== undefined
+            ? value.confirmPassword !== value.password
+            : false;
+        if (mismatch)
+          ctx.addIssue({
+            code: 'custom',
+            path: ['confirmPassword'],
+            message: 'Hai mật khẩu chưa khớp.',
+          });
+      })
       .parse(req.body);
+    if (requireEmailVerification && config.production && !config.smtpHost)
+      httpError(503, 'Dịch vụ gửi email chưa sẵn sàng.');
     const user = await createUser(c, body);
-    res.status(201).json(await startSession(user, res));
+    if (!requireEmailVerification) {
+      const emailVerifiedAt = new Date();
+      await c.users.updateOne({ _id: user._id }, { $set: { emailVerifiedAt } });
+      res.status(201).json(await startSession({ ...user, emailVerifiedAt }, res));
+      return;
+    }
+    const token = randomToken();
+    const hash = digest(token);
+    await c.users.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          emailVerifiedAt: null,
+          verifyHash: hash,
+          verifyExpiresAt: new Date(Date.now() + VERIFY_WINDOW_MS),
+        },
+      },
+    );
+    try {
+      await mailer(body.email, `${config.frontendUrl}/verify?token=${token}`, config, 'verify');
+    } catch {
+      await c.users.deleteOne({ _id: user._id, emailVerifiedAt: null });
+      console.error('Không thể gửi email xác minh. Kiểm tra cấu hình SMTP.');
+      httpError(503, 'Dịch vụ gửi email chưa sẵn sàng.');
+    }
+    res.status(201).json({
+      message: 'Hãy mở email để xác minh tài khoản trước khi vào trang chủ.',
+      email: body.email,
+    });
   };
 
   const login: RequestHandler = async (req, res) => {
@@ -74,6 +120,11 @@ export function createAuthController(
     if (!user || !user.passwordHash || !valid)
       httpError(401, 'Email hoặc mật khẩu không chính xác.');
     if (user.status !== 'ACTIVE') httpError(403, 'Tài khoản đã bị khóa. Liên hệ quản trị viên.');
+    if (!emailIsVerified(user))
+      httpError(
+        403,
+        'Email chưa được xác minh. Hãy mở liên kết trong hộp thư trước khi đăng nhập.',
+      );
     res.json(await startSession(user, res));
   };
 
@@ -102,6 +153,11 @@ export function createAuthController(
         googleId: payload.sub,
       });
     if (user.status !== 'ACTIVE') httpError(403, 'Tài khoản đã bị khóa.');
+    if (!emailIsVerified(user)) {
+      const emailVerifiedAt = new Date();
+      await c.users.updateOne({ _id: user._id }, { $set: { emailVerifiedAt } });
+      user = { ...user, emailVerifiedAt };
+    }
     res.json(await startSession(user, res));
   };
 
@@ -121,7 +177,12 @@ export function createAuthController(
       httpError(401, 'Phiên đăng nhập đã hết hạn.');
     }
     const user = await c.users.findOne({ _id: session.userId });
-    if (!user || user.status !== 'ACTIVE' || user.tokenVersion !== session.tokenVersion) {
+    if (
+      !user ||
+      user.status !== 'ACTIVE' ||
+      !emailIsVerified(user) ||
+      user.tokenVersion !== session.tokenVersion
+    ) {
       await c.sessions.updateOne({ _id: session._id }, { $set: { revoked: true } });
       clearRefreshCookie(res, config);
       httpError(401, 'Vui lòng đăng nhập lại.');
@@ -168,6 +229,57 @@ export function createAuthController(
     });
   };
 
+  const resendVerification: RequestHandler = async (req, res) => {
+    const { email } = z.object({ email: emailSchema }).parse(req.body);
+    const message = 'Nếu tài khoản đang chờ xác minh, bạn sẽ nhận được email trong ít phút.';
+    if (config.production && !config.smtpHost) httpError(503, 'Dịch vụ gửi email chưa sẵn sàng.');
+    const user = await c.users.findOne({
+      email,
+      status: 'ACTIVE',
+      $or: [{ emailVerifiedAt: null }, { emailVerifiedAt: { $exists: false } }],
+    });
+    if (user) {
+      const token = randomToken();
+      const hash = digest(token);
+      await c.users.updateOne(
+        {
+          _id: user._id,
+          $or: [{ emailVerifiedAt: null }, { emailVerifiedAt: { $exists: false } }],
+        },
+        { $set: { verifyHash: hash, verifyExpiresAt: new Date(Date.now() + VERIFY_WINDOW_MS) } },
+      );
+      try {
+        await mailer(email, `${config.frontendUrl}/verify?token=${token}`, config, 'verify');
+      } catch {
+        await c.users.updateOne(
+          { _id: user._id, verifyHash: hash },
+          { $unset: { verifyHash: '', verifyExpiresAt: '' } },
+        );
+        console.error('Không thể gửi lại email xác minh. Kiểm tra cấu hình SMTP.');
+      }
+    }
+    res.json({ message });
+  };
+
+  const verifyEmail: RequestHandler = async (req, res) => {
+    const { token } = z.object({ token: z.string().min(20).max(100) }).parse(req.body);
+    const user = await c.users.findOneAndUpdate(
+      {
+        verifyHash: digest(token),
+        verifyExpiresAt: { $gt: new Date() },
+        status: 'ACTIVE',
+        $or: [{ emailVerifiedAt: null }, { emailVerifiedAt: { $exists: false } }],
+      },
+      {
+        $set: { emailVerifiedAt: new Date(), updatedAt: new Date() },
+        $unset: { verifyHash: '', verifyExpiresAt: '' },
+      },
+      { returnDocument: 'after' },
+    );
+    if (!user) httpError(400, 'Liên kết xác minh không hợp lệ hoặc đã hết hạn.');
+    res.json(await startSession(user, res));
+  };
+
   const resetPassword: RequestHandler = async (req, res) => {
     const body = z
       .object({ token: z.string().min(20).max(100), password: passwordSchema })
@@ -196,5 +308,7 @@ export function createAuthController(
     logout,
     forgotPassword,
     resetPassword,
+    resendVerification,
+    verifyEmail,
   };
 }

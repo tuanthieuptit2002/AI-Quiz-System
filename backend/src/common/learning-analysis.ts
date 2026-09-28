@@ -14,6 +14,19 @@ const clean = (s: string) => s.normalize('NFKC').trim().replace(/\s+/g, ' ');
 const hash = (v: unknown) => createHash('sha256').update(JSON.stringify(v)).digest('hex');
 type Bucket = Omit<LearningMetric, 'exams' | 'score' | 'level'> & { runIds: Set<string> };
 
+// Same cutoffs the analysis page explains: <60 weak, <80 developing, otherwise strong.
+export function classifyLevel(
+  questions: number,
+  exams: number,
+  percent: number,
+): LearningMetric['level'] {
+  if (questions < learningLimits.minQuestions || exams < learningLimits.minExams)
+    return 'INSUFFICIENT';
+  if (percent < 60) return 'WEAK';
+  if (percent < 80) return 'DEVELOPING';
+  return 'STRONG';
+}
+
 // Only immutable delivered classifications are used. Never infer old topics from the live bank.
 export function summarizeLearning(
   runs: ExamRun[],
@@ -103,14 +116,7 @@ export function summarizeLearning(
     [...map.values()]
       .map(({ runIds, ...b }) => {
         const percent = (b.earned / b.possible) * 100;
-        const level: LearningMetric['level'] =
-          b.questions < learningLimits.minQuestions || runIds.size < learningLimits.minExams
-            ? 'INSUFFICIENT'
-            : percent < 60
-              ? 'WEAK'
-              : percent < 80
-                ? 'DEVELOPING'
-                : 'STRONG';
+        const level = classifyLevel(b.questions, runIds.size, percent);
         return {
           ...b,
           earned: round(b.earned),

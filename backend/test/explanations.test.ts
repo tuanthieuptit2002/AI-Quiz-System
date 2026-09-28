@@ -57,7 +57,7 @@ test('Student AI Explanation: conversations, eligibility, source integrity and r
   const db = client.db('explanation_tests'),
     c = collections(db);
   await ensureIndexes(db);
-  const app = createApp(db, config, { rateLimits: false });
+  const app = createApp(db, config, { rateLimits: false, requireEmailVerification: false });
   const post = (path: string, token = '') =>
     request(app)
       .post(`/api${path}`)
@@ -485,7 +485,11 @@ test('Student AI Explanation: conversations, eligibility, source integrity and r
       const f = await fixture();
       await f.send();
       await processNextExplanation(db, async () => reply);
-      const noKey = createApp(db, { ...config, deepseekApiKey: '' }, { rateLimits: false });
+      const noKey = createApp(
+        db,
+        { ...config, deepseekApiKey: '' },
+        { rateLimits: false, requireEmailVerification: false },
+      );
       const meta = (
         await request(noKey)
           .get(`/api${f.path()}`)

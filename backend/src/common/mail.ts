@@ -4,12 +4,22 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { Config } from './config.js';
 
-export async function sendResetEmail(email: string, link: string, config: Config) {
+export type AccountEmailKind = 'reset' | 'verify';
+
+export async function sendResetEmail(
+  email: string,
+  link: string,
+  config: Config,
+  kind: AccountEmailKind = 'reset',
+) {
   const message = {
     from: config.smtpFrom,
     to: email,
-    subject: 'Đặt lại mật khẩu QuizSpace',
-    text: `Bạn đã yêu cầu đặt lại mật khẩu QuizSpace.\n\nMở liên kết sau trong 30 phút:\n${link}\n\nNếu bạn không yêu cầu, hãy bỏ qua email này.`,
+    subject: kind === 'verify' ? 'Xác minh email QuizSpace' : 'Đặt lại mật khẩu QuizSpace',
+    text:
+      kind === 'verify'
+        ? `Xác nhận email để bắt đầu dùng QuizSpace.\n\nMở liên kết sau trong 24 giờ:\n${link}\n\nNếu bạn không tạo tài khoản, hãy bỏ qua email này.`
+        : `Bạn đã yêu cầu đặt lại mật khẩu QuizSpace.\n\nMở liên kết sau trong 30 phút:\n${link}\n\nNếu bạn không yêu cầu, hãy bỏ qua email này.`,
   };
   if (config.smtpHost) {
     const transport = nodemailer.createTransport({

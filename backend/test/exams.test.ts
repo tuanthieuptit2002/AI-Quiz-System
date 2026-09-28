@@ -40,7 +40,7 @@ test('Exam builder and delivery enforce access, timing, randomization and gradin
     smtpFrom: '',
     mailDirectory: '',
   };
-  const app = createApp(db, config, { rateLimits: false });
+  const app = createApp(db, config, { rateLimits: false, requireEmailVerification: false });
   const post = (path: string, token = '') =>
     request(app)
       .post(`/api${path}`)

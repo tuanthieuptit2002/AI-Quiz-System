@@ -5,6 +5,7 @@ import type { Config } from '../common/config.js';
 import type { Collections } from '../database/collections.js';
 import type { User } from '../models/user.model.js';
 import { httpError } from '../common/http.js';
+import { emailIsVerified } from '../models/user.model.js';
 
 declare global {
   namespace Express {
@@ -41,6 +42,10 @@ export function authentication(c: Collections, config: Config) {
     const user = await c.users.findOne({ _id: new ObjectId(payload.sub) });
     if (!user || user.tokenVersion !== payload.ver) httpError(401, 'Vui lòng đăng nhập lại.');
     if (user.status !== 'ACTIVE') httpError(403, 'Tài khoản đã bị khóa. Liên hệ quản trị viên.');
+    if (!emailIsVerified(user)) {
+      await c.sessions.updateMany({ userId: user._id }, { $set: { revoked: true } });
+      httpError(403, 'Email chưa được xác minh. Hãy mở liên kết trong hộp thư.');
+    }
     const sessionId = new ObjectId(payload.sid);
     const session = await c.sessions.findOne({
       _id: sessionId,

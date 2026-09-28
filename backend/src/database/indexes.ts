@@ -6,6 +6,7 @@ export async function ensureIndexes(db: Db) {
   await Promise.all([
     c.users.createIndex({ email: 1 }, { unique: true }),
     c.users.createIndex({ resetHash: 1 }, { sparse: true }),
+    c.users.createIndex({ verifyHash: 1 }, { sparse: true }),
     c.sessions.createIndex({ tokenHash: 1 }, { unique: true }),
     c.sessions.createIndex({ userId: 1 }),
     c.sessions.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
@@ -23,6 +24,15 @@ export async function ensureIndexes(db: Db) {
     c.examRuns.createIndex({ examId: 1, studentId: 1, attemptNo: 1 }, { unique: true }),
     c.examRuns.createIndex({ studentId: 1, startedAt: -1 }),
     c.examRuns.createIndex({ studentId: 1, status: 1, submittedAt: -1, _id: -1 }),
+    c.practiceSessions.createIndex({ studentId: 1, createdAt: -1 }),
+    c.practiceSessions.createIndex(
+      { studentId: 1 },
+      {
+        unique: true,
+        name: 'one_active_practice_per_student',
+        partialFilterExpression: { status: 'ACTIVE' },
+      },
+    ),
     c.learningReports.createIndex({ studentId: 1, range: 1, sourceKey: 1 }, { unique: true }),
     c.learningReports.createIndex({ studentId: 1, 'requests.id': 1 }, { unique: true }),
     c.learningReports.createIndex({ status: 1, leaseUntil: 1, createdAt: 1 }),

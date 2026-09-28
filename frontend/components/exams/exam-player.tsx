@@ -24,7 +24,7 @@ import { useExamSession } from './use-exam-session';
 import { RunResult } from './exam-result';
 import { readableAnswer as readable } from '@/lib/grading';
 
-function AnswerInput({
+export function AnswerInput({
   q,
   response,
   onChange,

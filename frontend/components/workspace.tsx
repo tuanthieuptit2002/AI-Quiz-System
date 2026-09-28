@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -24,6 +24,7 @@ import {
   LibraryBig,
   ClipboardList,
   BrainCircuit,
+  Target,
 } from 'lucide-react';
 import { useAuth } from './auth-provider';
 import { Avatar, Logo, Loading, Modal, ErrorBox } from './ui';
@@ -38,6 +39,7 @@ import { ExamManagement, StudentExams } from './workspace-exams';
 import { AIExamStudio } from './workspace-ai-exams';
 import { AIStudio } from './workspace-ai';
 import { LearningAnalysisPage } from './workspace-analysis';
+import { PracticeStudio } from './practice/practice-studio';
 
 export type View =
   | 'dashboard'
@@ -47,6 +49,7 @@ export type View =
   | 'history'
   | 'progress'
   | 'learning-analysis'
+  | 'practice'
   | 'profile'
   | 'questions'
   | 'exams'
@@ -75,6 +78,7 @@ const navigation = [
   { view: 'history', label: 'Lịch sử thi', icon: History, roles: ['STUDENT'] },
   { view: 'progress', label: 'Tiến độ học', icon: ChartNoAxesCombined, roles: ['STUDENT'] },
   { view: 'learning-analysis', label: 'Phân tích học tập', icon: BrainCircuit, roles: ['STUDENT'] },
+  { view: 'practice', label: 'Luyện tập cá nhân', icon: Target, roles: ['STUDENT'] },
   {
     view: 'profile',
     label: 'Hồ sơ cá nhân',
@@ -152,7 +156,7 @@ export function Workspace({ view }: { view: View }) {
           <span className="workspace-status" />
         </div>
         <span className="nav-caption">WORKSPACE</span>
-        <nav>
+        <nav className="sidebar-nav">
           {nav
             .filter((item) => item.view !== 'profile')
             .map((item) => (
@@ -188,21 +192,16 @@ export function Workspace({ view }: { view: View }) {
             <LifeBuoy size={19} />
             <span>Trợ giúp</span>
           </button>
+          <button className="nav-item sidebar-logout" onClick={signOut} disabled={loggingOut}>
+            <LogOut size={19} />
+            <span>{loggingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}</span>
+          </button>
           <div className="sidebar-user">
             <Avatar user={user} />
             <div>
               <b>{user.name}</b>
               <small>{roleLabel[user.role]}</small>
             </div>
-            <button
-              className="icon-btn"
-              onClick={signOut}
-              disabled={loggingOut}
-              aria-label="Đăng xuất"
-              title="Đăng xuất"
-            >
-              <LogOut size={18} />
-            </button>
           </div>
         </div>
       </aside>
@@ -233,6 +232,10 @@ export function Workspace({ view }: { view: View }) {
             <Link href="/profile" aria-label="Hồ sơ cá nhân">
               <Avatar user={user} size="sm" />
             </Link>
+            <button className="topbar-logout" onClick={signOut} disabled={loggingOut}>
+              <LogOut size={16} />
+              <span>{loggingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}</span>
+            </button>
           </div>
         </header>
         <main className="page-content">
@@ -254,6 +257,11 @@ export function Workspace({ view }: { view: View }) {
               {view === 'history' && <HistoryPage />}
               {view === 'progress' && <ProgressPage />}
               {view === 'learning-analysis' && <LearningAnalysisPage />}
+              {view === 'practice' && (
+                <Suspense fallback={<Loading />}>
+                  <PracticeStudio />
+                </Suspense>
+              )}
               {view === 'profile' && <ProfilePage notify={notify} />}
               {view === 'questions' && <QuestionBank notify={notify} />}
               {view === 'ai-exams' && <AIExamStudio notify={notify} />}
@@ -335,6 +343,7 @@ function Help({ role }: { role: Role }) {
         : [
             'Tham gia lớp bằng mã lớp do giáo viên cung cấp.',
             'Lịch sử thi và tiến độ được cập nhật khi có kết quả bài thi.',
+            'Practice Weak Topics tạo quiz theo chủ đề còn yếu và chỉnh độ khó sau mỗi câu.',
             'Đặt mục tiêu học mỗi tuần trong Hồ sơ cá nhân.',
           ];
   return (

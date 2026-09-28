@@ -59,7 +59,7 @@ test('Auto Grading and teacher-controlled AI assistant', async (t) => {
   const db = client.db('grading_tests'),
     c = collections(db);
   await ensureIndexes(db);
-  const app = createApp(db, config, { rateLimits: false });
+  const app = createApp(db, config, { rateLimits: false, requireEmailVerification: false });
   const post = (path: string, token = '') =>
     request(app)
       .post(`/api${path}`)
@@ -389,7 +389,11 @@ test('Auto Grading and teacher-controlled AI assistant', async (t) => {
       await c.examRuns.updateOne({ _id: f.run._id }, { $set: { status: 'RUNNING' } });
       await f.suggest(2).expect(409);
       await c.examRuns.replaceOne({ _id: f.run._id }, f.run);
-      const noKey = createApp(db, { ...config, deepseekApiKey: '' }, { rateLimits: false });
+      const noKey = createApp(
+        db,
+        { ...config, deepseekApiKey: '' },
+        { rateLimits: false, requireEmailVerification: false },
+      );
       await request(noKey)
         .post(`/api${f.path}/grading/suggest`)
         .set('X-Requested-With', 'QuizSpace')

@@ -1,0 +1,253 @@
+.pq-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.pq-hero,
+.pq-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 28px 32px;
+  border: 1px solid #d9ebe3;
+  border-radius: 18px;
+  background: radial-gradient(ellipse at top right, #cfede1, transparent 62%), #edf7f2;
+}
+.pq-hero h2,
+.pq-summary h2 {
+  margin: 12px 0 8px;
+  color: #173e32;
+  font-size: clamp(22px, 2vw, 30px);
+  letter-spacing: -0.6px;
+}
+.pq-hero p,
+.pq-summary p,
+.pq-note,
+.pq-actions span,
+.pq-feedback p {
+  margin: 0;
+  color: #527466;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.pq-adapt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  align-self: center;
+  max-width: 280px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: white;
+  color: #173e32;
+  font-size: 13px;
+}
+.pq-adapt b {
+  color: #16896c;
+}
+.pq-adapt-wrong {
+  flex-basis: 100%;
+  color: #9a6230;
+}
+.pq-previous,
+.pq-card,
+.pq-side {
+  padding-bottom: 8px;
+}
+.pq-plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 22px 18px;
+}
+.pq-plan-list article,
+.pq-plan-list > div {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: white;
+}
+.pq-plan-list article > div,
+.pq-plan-list > div {
+  min-width: 0;
+}
+.pq-plan-list small {
+  display: block;
+  color: #7c8a89;
+  font-size: 11px;
+}
+.pq-plan-list b {
+  color: #173e32;
+}
+.pq-plan-list strong {
+  margin-left: auto;
+  color: #16896c;
+  font-size: 18px;
+}
+.pq-note {
+  padding: 0 22px 18px;
+}
+.pq-play {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+.pq-side {
+  padding: 18px;
+}
+.pq-side h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #173e32;
+}
+.pq-side > div {
+  margin-bottom: 12px;
+}
+.pq-side > div b,
+.pq-side > div span {
+  display: block;
+}
+.pq-side > div span {
+  color: #7c8a89;
+  font-size: 12px;
+}
+.pq-side > div i {
+  display: block;
+  height: 6px;
+  margin-top: 6px;
+  border-radius: 99px;
+  background: #16896c;
+}
+.pq-side .is-current b {
+  color: #16896c;
+}
+.pq-side .btn {
+  width: 100%;
+  margin-top: 8px;
+}
+.pq-card {
+  padding: 22px;
+}
+.pq-question-head,
+.pq-feedback header,
+.pq-actions,
+.pq-tags {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+.pq-question-head h2,
+.pq-feedback h2 {
+  margin: 8px 0 0;
+  color: #173e32;
+  font-size: 22px;
+  line-height: 1.45;
+}
+.pq-tags {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.pq-actions {
+  align-items: center;
+  margin-top: 18px;
+}
+.pq-feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.pq-feedback header b {
+  display: block;
+  color: #173e32;
+}
+.pq-feedback.is-correct header svg {
+  color: #16896c;
+}
+.pq-feedback.is-wrong header svg {
+  color: #b4533a;
+}
+.pq-review {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pq-review > div {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f6f8f7;
+}
+.pq-review .is-right {
+  background: #e7f6ef;
+}
+.pq-review .is-wrong {
+  background: #fdeceb;
+}
+.pq-explain {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f4faf7;
+}
+.pq-summary-score {
+  display: grid;
+  place-items: center;
+  width: 160px;
+  height: 160px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: white;
+  text-align: center;
+}
+.pq-summary-score b {
+  color: #16896c;
+  font-size: 32px;
+}
+.pq-summary-score span,
+.pq-summary .la-kicker {
+  color: #527466;
+}
+.pq-summary .pq-plan-list,
+.pq-summary .pq-feedback {
+  padding-left: 0;
+  padding-right: 0;
+}
+.pq-summary .btn {
+  margin-top: 8px;
+}
+.la-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+@media (max-width: 800px) {
+  .pq-hero,
+  .pq-summary,
+  .pq-play,
+  .pq-question-head,
+  .pq-actions {
+    display: flex;
+    flex-direction: column;
+  }
+  .pq-play {
+    display: flex;
+  }
+  .pq-summary-score {
+    width: 120px;
+    height: 120px;
+  }
+  .pq-plan-list article {
+    flex-wrap: wrap;
+  }
+  .pq-plan-list strong {
+    margin-left: 0;
+  }
+}

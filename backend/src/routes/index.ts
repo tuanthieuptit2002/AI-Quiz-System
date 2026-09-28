@@ -15,22 +15,32 @@ import { createExamRoutes } from './exam.routes.js';
 import { createAIExamRoutes } from './ai-exam.routes.js';
 import { createAIRoutes } from './ai.routes.js';
 import { createLearningRoutes } from './learning.routes.js';
+import { createPracticeRoutes } from './practice.routes.js';
 
-export function createApiRoutes(db: Db, config: Config, mailer: typeof sendResetEmail) {
+export function createApiRoutes(
+  db: Db,
+  config: Config,
+  mailer: typeof sendResetEmail,
+  options: { requireEmailVerification?: boolean } = {},
+) {
   const router = Router();
   const c = collections(db);
   const auth = authentication(c, config);
-  router.use('/auth', createAuthRoutes(c, config, mailer));
+  router.use(
+    '/auth',
+    createAuthRoutes(c, config, mailer, options.requireEmailVerification !== false),
+  );
   router.use('/me', auth, createProfileRoutes(c, config));
   router.use('/admin', auth, requireRole('ADMIN'), createAdminRoutes(c));
   router.use('/teacher', auth, requireRole('TEACHER'), createTeacherRoutes(c));
-  router.use('/student', auth, requireRole('STUDENT'), createStudentRoutes(c));
+  router.use('/student', auth, requireRole('STUDENT'), createStudentRoutes(c, db));
   router.use(
     '/student/learning-analysis',
     auth,
     requireRole('STUDENT'),
     createLearningRoutes(db, config),
   );
+  router.use('/student/practice', auth, requireRole('STUDENT'), createPracticeRoutes(db, config));
   router.use('/questions', auth, requireRole('ADMIN', 'TEACHER'), createQuestionRoutes(db));
   router.use('/exams', auth, createExamRoutes(db, config));
   router.use('/ai-exams', auth, requireRole('ADMIN', 'TEACHER'), createAIExamRoutes(db, config));

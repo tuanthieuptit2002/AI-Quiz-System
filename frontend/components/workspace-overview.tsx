@@ -14,11 +14,20 @@ import {
   Clock3,
   Trophy,
   CalendarDays,
+  Layers3,
 } from 'lucide-react';
 import { useQuery } from '@/lib/use-query';
 import { type User, type Classroom, type Progress, roleLabel, dateLabel } from '@/lib/types';
 import { Avatar, Empty, ErrorBox, Loading, Metric, SectionTitle } from './ui';
 import { ProgressChart } from './workspace-learning';
+import { StudentStrengths, TeacherAnalytics } from './dashboard-analytics';
+import {
+  countLabel,
+  percentLabel,
+  studyLabel,
+  type StudentDashboard,
+  type TeacherDashboard,
+} from '@/lib/dashboard';
 
 export function Overview({ user }: { user: User }) {
   return (
@@ -245,45 +254,68 @@ function AdminOverview() {
   );
 }
 function TeacherOverview() {
+  const dashboard = useQuery<TeacherDashboard>('/teacher/dashboard');
   const classes = useQuery<{ classes: Classroom[] }>('/teacher/classes');
-  const students = useQuery<{ students: User[] }>('/teacher/students');
-  if (classes.loading || students.loading) return <Loading />;
-  if (classes.error || students.error)
+  if (dashboard.loading || classes.loading) return <Loading />;
+  if (dashboard.error || !dashboard.data || classes.error)
     return (
       <ErrorBox
-        message={classes.error || students.error}
+        message={dashboard.error || classes.error}
         retry={() => {
+          dashboard.reload();
           classes.reload();
-          students.reload();
         }}
       />
     );
+  const data = dashboard.data;
   const list = classes.data?.classes || [];
-  const people = students.data?.students || [];
   return (
     <>
-      <div className="metrics-grid three">
-        <Metric
-          label="Lớp học của bạn"
-          value={list.length}
-          icon={<BookOpen size={21} />}
-          detail="Không gian kết nối tri thức"
-        />
+      <div className="metrics-grid">
         <Metric
           label="Học sinh"
-          value={people.length}
+          value={countLabel(data.students)}
           icon={<GraduationCap size={22} />}
           detail="Thành viên trong các lớp của bạn"
+        />
+        <Metric
+          label="Đề thi"
+          value={countLabel(data.exams)}
+          icon={<BookOpen size={21} />}
+          detail="Đề đang soạn và đã xuất bản"
           tone="violet"
         />
         <Metric
-          label="Đang hoạt động"
-          value={people.filter((s) => s.status === 'ACTIVE').length}
-          icon={<Users size={21} />}
-          detail="Tài khoản học sinh hoạt động"
+          label="Câu hỏi"
+          value={countLabel(data.questions)}
+          icon={<Layers3 size={21} />}
+          detail="Trong ngân hàng, trừ câu đã lưu trữ"
           tone="blue"
         />
+        <Metric
+          label="Lượt làm bài"
+          value={countLabel(data.attempts)}
+          icon={<Check size={21} />}
+          detail="Bài đã nộp, kể cả bài chờ chấm"
+          tone="amber"
+        />
       </div>
+      <div className="metrics-grid two">
+        <Metric
+          label="Điểm trung bình"
+          value={percentLabel(data.averageScore)}
+          icon={<Trophy size={21} />}
+          detail="Các bài đã có điểm"
+        />
+        <Metric
+          label="Tỷ lệ đạt"
+          value={percentLabel(data.passRate)}
+          icon={<Target size={21} />}
+          detail="Số bài đạt trên số bài đã chấm"
+          tone="violet"
+        />
+      </div>
+      <TeacherAnalytics data={data} />
       <section className="panel">
         <div className="panel-heading">
           <div>
@@ -336,51 +368,52 @@ function TeacherOverview() {
 }
 function StudentOverview() {
   const progress = useQuery<Progress>('/student/progress');
-  const classes = useQuery<{ classes: Classroom[] }>('/student/classes');
-  if (progress.loading || classes.loading) return <Loading />;
-  if (progress.error || classes.error)
+  const dashboard = useQuery<StudentDashboard>('/student/dashboard');
+  if (progress.loading || dashboard.loading) return <Loading />;
+  if (progress.error || dashboard.error || !dashboard.data)
     return (
       <ErrorBox
-        message={progress.error || classes.error}
+        message={progress.error || dashboard.error}
         retry={() => {
           progress.reload();
-          classes.reload();
+          dashboard.reload();
         }}
       />
     );
   const data = progress.data!;
-  const list = classes.data?.classes || [];
+  const summary = dashboard.data;
   return (
     <>
       <div className="metrics-grid">
         <Metric
           label="Bài thi đã hoàn thành"
-          value={data.attempts}
+          value={countLabel(summary.completed)}
           icon={<Check size={21} />}
           detail="Mỗi bài thi là một bước tiến"
         />
         <Metric
           label="Điểm trung bình"
-          value={data.attempts ? `${data.average}/10` : '—'}
+          value={percentLabel(summary.averageScore)}
           icon={<Trophy size={21} />}
-          detail="Dựa trên các bài đã hoàn thành"
+          detail="Trên thang 100%"
           tone="violet"
         />
         <Metric
-          label="Thời gian học"
-          value={`${data.minutes} phút`}
-          icon={<Clock3 size={21} />}
-          detail="Tổng thời gian làm bài"
+          label="Điểm cao nhất"
+          value={percentLabel(summary.bestScore)}
+          icon={<Target size={21} />}
+          detail="Bài làm tốt nhất"
           tone="blue"
         />
         <Metric
-          label="Lớp đang tham gia"
-          value={list.length}
-          icon={<BookOpen size={21} />}
-          detail="Cùng thầy cô và bạn bè"
+          label="Thời gian học"
+          value={studyLabel(summary.studyMinutes)}
+          icon={<Clock3 size={21} />}
+          detail="Tổng thời gian làm bài"
           tone="amber"
         />
       </div>
+      <StudentStrengths data={summary} />
       <div className="overview-grid">
         <section className="panel">
           <div className="panel-heading">

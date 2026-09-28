@@ -10,6 +10,7 @@ import type { AIGeneration } from '../models/ai-generation.model.js';
 import type { GradingSuggestion, GradingEvent } from '../models/grading.model.js';
 import type { ExplanationThread } from '../models/explanation.model.js';
 import type { LearningReport } from '../models/learning.model.js';
+import type { PracticeSession } from '../models/practice.model.js';
 
 export function collections(db: Db) {
   return {
@@ -28,6 +29,7 @@ export function collections(db: Db) {
     gradingEvents: db.collection<GradingEvent>('gradingEvents'),
     explanationThreads: db.collection<ExplanationThread>('explanationThreads'),
     learningReports: db.collection<LearningReport>('learningReports'),
+    practiceSessions: db.collection<PracticeSession>('practiceSessions'),
   };
 }
 

@@ -90,6 +90,13 @@ function LearningContent({ range }: { range: LearningRange }) {
           <span className="la-hero-note">
             <CheckCircle2 size={14} /> Dựa trên điểm đã chấm · Gợi ý học tập, không thay đổi điểm
           </span>
+          {(weak.length > 0 || s.topics.some((topic) => topic.level === 'DEVELOPING')) && (
+            <div className="la-hero-actions">
+              <Link className="btn btn-primary" href={`/practice?range=${range}`}>
+                Practice Weak Topics <ArrowRight size={16} />
+              </Link>
+            </div>
+          )}
         </div>
         <div
           className="la-score-ring"
@@ -243,9 +250,15 @@ function LearningContent({ range }: { range: LearningRange }) {
             )}
             <footer className="la-ai-footer">
               <span>Đã lưu · {new Date(report!.updatedAt).toLocaleString('vi-VN')}</span>
-              <Link href="/exams" className="text-link">
-                Luyện tập tiếp <ArrowRight size={15} />
-              </Link>
+              {weak.length || s.topics.some((topic) => topic.level === 'DEVELOPING') ? (
+                <Link href={`/practice?range=${range}`} className="btn btn-primary small">
+                  Practice Weak Topics <ArrowRight size={15} />
+                </Link>
+              ) : (
+                <Link href="/exams" className="text-link">
+                  Luyện tập tiếp <ArrowRight size={15} />
+                </Link>
+              )}
             </footer>
           </>
         ) : (

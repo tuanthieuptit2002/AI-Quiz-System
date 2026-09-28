@@ -35,7 +35,7 @@ test('Question bank, ownership, revisions and file exchange on isolated replica 
     smtpFrom: '',
     mailDirectory: '',
   };
-  const app = createApp(db, config, { rateLimits: false });
+  const app = createApp(db, config, { rateLimits: false, requireEmailVerification: false });
   const post = (path: string, token = '') =>
     request(app)
       .post(`/api${path}`)

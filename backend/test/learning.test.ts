@@ -99,7 +99,7 @@ test('Learning analysis: evidence, authorization, cached AI and recovery', async
   const db = client.db('learning_tests'),
     c = collections(db);
   await ensureIndexes(db);
-  const app = createApp(db, config, { rateLimits: false });
+  const app = createApp(db, config, { rateLimits: false, requireEmailVerification: false });
   const post = (path: string, token = '') =>
     request(app)
       .post(`/api${path}`)
@@ -348,7 +348,11 @@ test('Learning analysis: evidence, authorization, cached AI and recovery', async
         .send({ range: '90', sourceKey: ninety.snapshot.sourceKey, requestId: randomUUID() })
         .expect(409);
       await processNextLearningReport(db, async (input) => answer(input));
-      const noKey = createApp(db, { ...config, deepseekApiKey: '' }, { rateLimits: false });
+      const noKey = createApp(
+        db,
+        { ...config, deepseekApiKey: '' },
+        { rateLimits: false, requireEmailVerification: false },
+      );
       const cached = await request(noKey)
         .get('/api/student/learning-analysis?range=all')
         .auth(f.student.accessToken, { type: 'bearer' })

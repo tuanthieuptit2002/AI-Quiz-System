@@ -23,7 +23,7 @@ import { Logo, ErrorBox, Spinner, Field } from './ui';
 import { api, jsonBody } from '@/lib/api';
 import type { AuthResult } from '@/lib/types';
 
-type Mode = 'login' | 'register' | 'forgot' | 'reset';
+type Mode = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
 declare global {
   interface Window {
     google?: {
@@ -48,9 +48,15 @@ export function AuthScreen({ mode }: { mode: Mode }) {
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [done, setDone] = useState(false);
+  const [resent, setResent] = useState(false);
+  const [verifying, setVerifying] = useState(
+    mode === 'verify' && (params.get('token') || '').length >= 20,
+  );
+  const [verified, setVerified] = useState(false);
   const [role, setRole] = useState<'STUDENT' | 'TEACHER'>('STUDENT');
   const [googleClientId, setGoogleClientId] = useState('');
   const googleRef = useRef<HTMLDivElement>(null);
+  const verifyStarted = useRef(false);
   useEffect(() => {
     if (!loading && user && (mode === 'login' || mode === 'register')) router.replace('/dashboard');
   }, [user, loading, mode, router]);
@@ -59,6 +65,28 @@ export function AuthScreen({ mode }: { mode: Mode }) {
       .then((result) => setGoogleClientId(result.googleClientId))
       .catch(() => {});
   }, []);
+  useEffect(() => {
+    if (mode !== 'verify') return;
+    const timer = setTimeout(() => {
+      if (verifyStarted.current) return;
+      verifyStarted.current = true;
+      const token = new URLSearchParams(window.location.search).get('token') || '';
+      if (token.length < 20) return;
+      setVerifying(true);
+      api<AuthResult>('/auth/verify-email', { method: 'POST', body: jsonBody({ token }) })
+        .then((result) => {
+          accept(result);
+          setVerified(true);
+          setVerifying(false);
+          window.setTimeout(() => router.replace('/dashboard'), 4000);
+        })
+        .catch((reason) => {
+          setError((reason as Error).message);
+          setVerifying(false);
+        });
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [mode, accept, router]);
   const setupGoogle = () => {
     if (!googleClientId || !googleRef.current || !window.google) return;
     window.google.accounts.id.initialize({
@@ -94,16 +122,25 @@ export function AuthScreen({ mode }: { mode: Mode }) {
     setBusy(true);
     setError('');
     const form = new FormData(event.currentTarget);
+    const email = String(form.get('email') || '');
     try {
-      const email = String(form.get('email') || '');
       const password = String(form.get('password') || '');
-      if (mode === 'login' || mode === 'register') {
-        const body =
-          mode === 'login'
-            ? { email, password }
-            : { email, password, name: form.get('name'), role };
-        accept(await api<AuthResult>(`/auth/${mode}`, { method: 'POST', body: jsonBody(body) }));
+      if (mode === 'login') {
+        accept(
+          await api<AuthResult>('/auth/login', {
+            method: 'POST',
+            body: jsonBody({ email, password }),
+          }),
+        );
         router.replace('/dashboard');
+      } else if (mode === 'register') {
+        const confirmPassword = String(form.get('confirmPassword') || '');
+        if (password !== confirmPassword) throw new Error('Hai mật khẩu chưa khớp.');
+        await api('/auth/register', {
+          method: 'POST',
+          body: jsonBody({ email, password, confirmPassword, name: form.get('name'), role }),
+        });
+        router.push(`/verify?email=${encodeURIComponent(email)}`);
       } else if (mode === 'forgot') {
         await api('/auth/forgot-password', { method: 'POST', body: jsonBody({ email }) });
         setDone(true);
@@ -119,6 +156,28 @@ export function AuthScreen({ mode }: { mode: Mode }) {
         setDone(true);
       }
     } catch (error) {
+      const message = (error as Error).message;
+      if (mode === 'login' && message.includes('xác minh')) {
+        router.push(`/verify?email=${encodeURIComponent(email)}`);
+        return;
+      }
+      setError(message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  const pendingEmail = params.get('email') || '';
+  async function resendVerification() {
+    if (!pendingEmail) return;
+    setBusy(true);
+    setError('');
+    try {
+      await api('/auth/resend-verification', {
+        method: 'POST',
+        body: jsonBody({ email: pendingEmail }),
+      });
+      setResent(true);
+    } catch (error) {
       setError((error as Error).message);
     } finally {
       setBusy(false);
@@ -129,12 +188,14 @@ export function AuthScreen({ mode }: { mode: Mode }) {
     register: 'Bắt đầu hành trình mới.',
     forgot: 'Quên mật khẩu?',
     reset: 'Tạo mật khẩu mới.',
+    verify: 'Xác minh email.',
   };
   const subtitles = {
     login: 'Đăng nhập để tiếp tục hành trình học tập của bạn.',
     register: 'Một tài khoản. Mở ra nhiều cơ hội học tập.',
     forgot: 'Đừng lo, chúng mình sẽ giúp bạn lấy lại quyền truy cập.',
     reset: 'Một mật khẩu mạnh để bảo vệ không gian của bạn.',
+    verify: 'Mở liên kết trong email để vào trang chủ.',
   };
   return (
     <div className="auth-page">
@@ -238,7 +299,7 @@ export function AuthScreen({ mode }: { mode: Mode }) {
           )}
         </div>
         <div className="auth-form-wrap">
-          {mode === 'forgot' || mode === 'reset' ? (
+          {mode === 'forgot' || mode === 'reset' || (mode === 'verify' && !verified) ? (
             <Link className="back-link" href="/login">
               <ArrowLeft size={16} /> Quay lại đăng nhập
             </Link>
@@ -247,12 +308,56 @@ export function AuthScreen({ mode }: { mode: Mode }) {
               <span /> YOUR NEXT CHAPTER STARTS HERE
             </span>
           )}
-          {done ? (
+          {mode === 'verify' ? (
             <div className="auth-success">
               <span className="success-icon">
-                {mode === 'forgot' ? <Mail size={30} /> : <Check size={30} />}
+                {verified ? <Check size={30} /> : verifying ? <Spinner /> : <Mail size={30} />}
               </span>
-              <h2>{mode === 'forgot' ? 'Kiểm tra hộp thư nhé.' : 'Mật khẩu đã được cập nhật.'}</h2>
+              <h2>
+                {verified
+                  ? 'Xác minh thành công'
+                  : verifying
+                    ? 'Đang xác minh email…'
+                    : pendingEmail
+                      ? 'Kiểm tra hộp thư nhé.'
+                      : 'Chưa xác minh được email.'}
+              </h2>
+              <p>
+                {verified
+                  ? 'Tài khoản đã sẵn sàng. Bạn sẽ vào trang chủ trong giây lát.'
+                  : verifying
+                    ? 'Đang kiểm tra liên kết xác minh.'
+                    : pendingEmail
+                      ? `Mở liên kết đã gửi tới ${pendingEmail}. Liên kết có hiệu lực trong 24 giờ. Hãy kiểm tra cả mục thư rác.`
+                      : error || 'Liên kết không hợp lệ hoặc đã hết hạn.'}
+              </p>
+              {verified && (
+                <Link href="/dashboard" className="btn btn-primary">
+                  Vào trang chủ <ArrowRight size={17} />
+                </Link>
+              )}
+              {!verified && !verifying && pendingEmail && (
+                <button
+                  type="button"
+                  className="btn btn-secondary auth-resend"
+                  disabled={busy || resent}
+                  onClick={resendVerification}
+                >
+                  {busy ? <Spinner /> : resent ? 'Đã gửi lại email' : 'Gửi lại email xác minh'}
+                </button>
+              )}
+              {!verified && !verifying && !pendingEmail && (
+                <Link href="/login" className="btn btn-primary">
+                  Quay lại đăng nhập <ArrowRight size={17} />
+                </Link>
+              )}
+            </div>
+          ) : done ? (
+            <div className="auth-success">
+              <span className="success-icon">
+                {mode === 'reset' ? <Check size={30} /> : <Mail size={30} />}
+              </span>
+              <h2>{mode === 'reset' ? 'Mật khẩu đã được cập nhật.' : 'Kiểm tra hộp thư nhé.'}</h2>
               <p>
                 {mode === 'forgot'
                   ? 'Nếu email tồn tại trong hệ thống, bạn sẽ nhận được liên kết đặt lại mật khẩu. Đừng quên kiểm tra mục thư rác.'
@@ -347,15 +452,17 @@ export function AuthScreen({ mode }: { mode: Mode }) {
                     </div>
                   </Field>
                 )}
-                {mode === 'reset' && (
-                  <Field label="Xác nhận mật khẩu">
+                {(mode === 'reset' || mode === 'register') && (
+                  <Field label={mode === 'register' ? 'Nhập lại mật khẩu' : 'Xác nhận mật khẩu'}>
                     <input
                       name="confirmPassword"
                       type="password"
                       autoComplete="new-password"
                       minLength={10}
                       maxLength={72}
-                      placeholder="Nhập lại mật khẩu mới"
+                      placeholder={
+                        mode === 'register' ? 'Nhập lại mật khẩu' : 'Nhập lại mật khẩu mới'
+                      }
                       required
                     />
                   </Field>

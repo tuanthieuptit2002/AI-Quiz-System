@@ -20,11 +20,17 @@ export function applyRateLimits(app: Express) {
     message: { message: 'Quá nhiều lần thử. Vui lòng thử lại sau 15 phút.' },
   });
   app.use(
-    ['/api/auth/login', '/api/auth/register', '/api/auth/google', '/api/auth/reset-password'],
+    [
+      '/api/auth/login',
+      '/api/auth/register',
+      '/api/auth/google',
+      '/api/auth/reset-password',
+      '/api/auth/verify-email',
+    ],
     authLimit,
   );
   app.use(
-    '/api/auth/forgot-password',
+    ['/api/auth/forgot-password', '/api/auth/resend-verification'],
     rateLimit({
       windowMs: 15 * 60000,
       limit: 5,

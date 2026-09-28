@@ -170,7 +170,7 @@ test('AI Exam integration: planning, scoped bank reuse, generation, review and t
   const db = client.db('ai_exam_tests');
   await ensureIndexes(db);
   const c = collections(db),
-    app = createApp(db, config, { rateLimits: false });
+    app = createApp(db, config, { rateLimits: false, requireEmailVerification: false });
   const post = (path: string, token = '') =>
     request(app)
       .post(`/api${path}`)

@@ -14,7 +14,11 @@ import { createApiRoutes } from './routes/index.js';
 export function createApp(
   db: Db,
   config: Config,
-  options: { rateLimits?: boolean; mailer?: typeof sendResetEmail } = {},
+  options: {
+    rateLimits?: boolean;
+    mailer?: typeof sendResetEmail;
+    requireEmailVerification?: boolean;
+  } = {},
 ) {
   const app = express();
   app.disable('x-powered-by');
@@ -26,7 +30,12 @@ export function createApp(
   app.use('/api', requestGuard(config));
   if (options.rateLimits !== false) applyRateLimits(app);
   app.get('/health', createHealthController(db));
-  app.use('/api', createApiRoutes(db, config, options.mailer || sendResetEmail));
+  app.use(
+    '/api',
+    createApiRoutes(db, config, options.mailer || sendResetEmail, {
+      requireEmailVerification: options.requireEmailVerification !== false,
+    }),
+  );
   app.use(notFound);
   app.use(errorHandler);
   return app;

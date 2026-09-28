@@ -25,7 +25,7 @@ Nếu đổi địa chỉ backend, đặt `API_SERVER_URL` trong môi trường 
 
 ## Tài khoản và phân quyền
 
-- **Đăng ký:** tự đăng ký Student hoặc Teacher. Không thể đăng ký Admin qua API công khai.
+- **Đăng ký:** tự đăng ký Student hoặc Teacher và nhập mật khẩu hai lần. Mọi tài khoản mật khẩu, kể cả tài khoản tạo trước đây, chỉ vào được trang web sau khi mở liên kết xác minh email. Đăng nhập Google dùng email Google đã xác minh. Không thể đăng ký Admin qua API công khai.
 - **Xác thực:** mật khẩu bcrypt; JWT access 15 phút ở bộ nhớ trình duyệt; refresh token ngẫu nhiên trong cookie HttpOnly, SameSite=Strict, Secure khi production.
 - **Phiên đăng nhập:** refresh token được xoay mỗi lần dùng, chỉ lưu hash trong MongoDB; phát hiện dùng lại token sẽ thu hồi phiên. Phiên hết hạn sau 7 ngày.
 - **Profile:** tên, giới thiệu, số điện thoại, mục tiêu học tuần, đổi mật khẩu, tải/xóa avatar. Ảnh JPG/PNG/WebP tối đa 500 KB được kiểm tra, resize và mã hóa lại thành WebP.
@@ -48,13 +48,13 @@ Script không tự đổi mật khẩu hay nâng quyền một tài khoản đã
 Admin đầu tiên của workspace hiện tại đã được tạo cho **tuanvp0304@gmail.com**. Mật khẩu ban đầu ở biến `ADMIN_PASSWORD` trong `backend/.env`.
 Sau khi đăng nhập, đổi mật khẩu tại **Hồ sơ cá nhân → Bảo mật tài khoản**. Giá trị `ADMIN_PASSWORD` chỉ dùng để khởi tạo, không tự đồng bộ khi bạn đổi mật khẩu trong ứng dụng.
 
-## Quên mật khẩu
+## Email xác minh và quên mật khẩu
 
-Liên kết có hạn 30 phút, chỉ dùng một lần; không trả token trong API công khai. Phản hồi yêu cầu khôi phục không tiết lộ email có tồn tại hay không.
+Đăng ký gửi liên kết `/verify` có hạn 24 giờ. Quên mật khẩu gửi liên kết `/reset-password` có hạn 30 phút. Cả hai chỉ dùng một lần và không trả token trong API công khai. Gửi lại email không tiết lộ địa chỉ có tồn tại hay không.
 
 - Khi có `SMTP_HOST`, backend gửi email thật qua SMTP. Cấu hình thêm `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
-- **Development chưa có SMTP:** email được lưu dưới dạng JSON tại `backend/.mail/`, không công khai qua HTTP. Mở file mới nhất và dùng liên kết trong trường `text` để kiểm tra luồng reset.
-- **Production:** cần SMTP. Backend từ chối yêu cầu gửi email nếu chưa cấu hình.
+- **Development chưa có SMTP:** email được lưu dưới dạng JSON tại `backend/.mail/`, không công khai qua HTTP. Mở file mới nhất và dùng liên kết trong trường `text`.
+- **Production:** cần SMTP. Backend từ chối đăng ký và yêu cầu gửi email nếu chưa cấu hình.
 
 ## Đăng nhập Google (tùy chọn)
 
@@ -102,7 +102,7 @@ Xem [hướng dẫn AI Exam Generator](docs/ai-exam-generator.md) về quy tắc
 
 ## Dữ liệu học tập
 
-Các collection chính: `users`, `sessions`, `classes`, `questions`, `questionVersions`, `exams`, `examRuns`, `examAttempts`, `aiGenerations`, `aiExams`, `gradingSuggestions`, `gradingEvents`, `explanationThreads` và `learningReports`. Unique/TTL index được tạo khi server khởi động.
+Các collection chính: `users`, `sessions`, `classes`, `questions`, `questionVersions`, `exams`, `examRuns`, `examAttempts`, `aiGenerations`, `aiExams`, `gradingSuggestions`, `gradingEvents`, `explanationThreads`, `learningReports` và `practiceSessions`. Unique/TTL index được tạo khi server khởi động.
 
 Lịch sử và tiến độ đọc dữ liệu thật từ `examAttempts`, không tạo điểm mẫu. Khi bài thi được chấm xong, backend ghi kết quả vào collection này (thang điểm 10). Bài có tự luận/trả lời ngắn chưa chấm đủ không được tính vào tiến độ. Học sinh không thể tự gửi điểm.
 
@@ -165,6 +165,19 @@ Student chọn **Phân tích học tập** tại **http://localhost:3000/learnin
 
 Dùng chung cấu hình DeepSeek; tối đa 10 yêu cầu/Student trong 24 giờ. Xem [hướng dẫn AI Learning Analysis](docs/ai-learning-analysis.md).
 
+## Personalized Quiz — luyện đúng chỗ còn yếu
+
+Student bấm **Practice Weak Topics** trên **Phân tích học tập**, hoặc mở **Luyện tập cá nhân** tại **http://localhost:3000/practice**.
+
+- Quiz chỉ gồm chủ đề **Ưu tiên ôn** và **Cần củng cố**. Mỗi chủ đề có ít nhất 5 câu và tối đa 10 câu. Một chủ đề được 10 câu; hai chủ đề được 20 câu; từ ba chủ đề thì tổng là 25 câu, phần dư được dồn cho chủ đề yếu hơn.
+- Ví dụ Redis 40%, Kafka 42% và Spring Boot 70% cho ra **Redis 10 câu, Kafka 10 câu, Spring Boot 5 câu**. Độ khó bắt đầu theo điểm: dưới 45% là Dễ, dưới 60% là Trung bình, dưới 80% là Khó.
+- Trong lúc làm, đúng một câu thì câu sau của **cùng chủ đề** khó hơn một mức; sai thì dễ hơn một mức. Các chủ đề được xen kẽ, không làm hết một chủ đề rồi mới sang chủ đề khác.
+- Câu lấy từ ngân hàng **Sẵn sàng**, cùng môn và đúng đường dẫn chủ đề. Hết câu thì DeepSeek tạo câu trắc nghiệm chỉ cho phiên đó, không đưa vào Question Bank và không tạo đề thi.
+- Kết quả luyện được cộng vào lần xếp đề tiếp theo. Chủ đề làm tốt nhận ít câu hơn, bắt đầu khó hơn, hoặc ra khỏi quiz khi đã đạt mức điểm mạnh. Điểm bài thi, tiến độ và phân tích chính thức không đổi.
+- Tối đa 6 phiên và 40 câu AI mỗi Student trong 24 giờ. Có thể kết thúc sớm; câu chưa nộp không được tính.
+
+Xem [hướng dẫn Personalized Quiz](docs/personalized-quiz.md).
+
 ## Cấu hình
 
 Xem `backend/.env.example`:
@@ -200,11 +213,13 @@ Exam Player có thêm kiểm thử bản nháp, mất phản hồi, đồng bộ
 Auto Grading kiểm tra điểm có trọng số, xác nhận của Teacher, lịch sử sửa điểm, quyền truy cập, job AI/lease, thử lại và dữ liệu AI không hợp lệ.
 AI Explanation kiểm tra quyền xem đáp án, hội thoại nhiều lượt, câu hỏi đã trộn, gửi lại request, lease, giới hạn sử dụng và kết quả thay đổi sau khi Teacher chấm lại.
 AI Learning Analysis kiểm tra điểm có trọng số theo chủ đề, mẫu ít, thi lại, phạm vi thời gian, bài cũ/ẩn/chờ chấm, phân quyền, cache và khôi phục job, quota và dữ liệu thay đổi trong lúc AI chạy.
+Personalized Quiz kiểm tra phân bổ 10/10/5, tăng/giảm độ khó, đề sau bỏ chủ đề đã vững, và việc luyện tập không ghi vào điểm bài thi.
+Dashboard giáo viên thống kê học sinh, đề, câu hỏi, lượt làm, điểm trung bình, tỷ lệ đạt và các biểu đồ từ bài đã chấm. Dashboard học sinh hiện số bài, điểm %, thời gian học, cùng chủ đề mạnh/yếu theo đúng ngưỡng phân tích học tập.
 
 ## Cấu trúc
 
 - `backend/src/app.ts`: lắp ghép middleware và routes; `server.ts` khởi động server.
-- `backend/src/routes`: khai báo đường dẫn API theo auth, profile, admin, teacher, student, questions, exams, ai, ai-exams.
+- `backend/src/routes`: khai báo đường dẫn API theo auth, profile, admin, teacher, student, dashboard, questions, exams, ai, ai-exams, learning-analysis, practice.
 - `backend/src/controllers`: xử lý request theo từng nhóm tính năng.
 - `backend/src/middleware`: xác thực, phân quyền, kiểm tra request, giới hạn tần suất và xử lý lỗi.
 - `backend/src/models`: kiểu dữ liệu MongoDB và hàm chuyển dữ liệu trả về client.

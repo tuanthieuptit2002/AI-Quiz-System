@@ -276,7 +276,7 @@ test('AI workflow persists drafts, enforces ownership and approves atomically in
   const db = client.db('ai_tests');
   await ensureIndexes(db);
   const c = collections(db);
-  const app = createApp(db, config, { rateLimits: false });
+  const app = createApp(db, config, { rateLimits: false, requireEmailVerification: false });
   const post = (path: string, token = '') =>
     request(app)
       .post(`/api${path}`)
@@ -558,7 +558,11 @@ test('AI workflow persists drafts, enforces ownership and approves atomically in
         return fakeGenerator(input);
       });
       assert.equal(called, false);
-      const disabled = createApp(db, { ...config, deepseekApiKey: '' }, { rateLimits: false });
+      const disabled = createApp(
+        db,
+        { ...config, deepseekApiKey: '' },
+        { rateLimits: false, requireEmailVerification: false },
+      );
       await request(disabled)
         .post('/api/ai/generations')
         .auth(token, { type: 'bearer' })

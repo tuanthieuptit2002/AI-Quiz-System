@@ -8,7 +8,7 @@ import { createApp } from '../src/app.js';
 import { ensureIndexes } from '../src/database/indexes.js';
 import { collections } from '../src/database/collections.js';
 import type { User } from '../src/models/user.model.js';
-import { hashPassword } from '../src/common/security.js';
+import { accessToken, digest, hashPassword, randomToken } from '../src/common/security.js';
 import type { Config } from '../src/common/config.js';
 
 test('Accounts, RBAC and classroom integration on isolated MongoDB', async (t) => {
@@ -22,7 +22,7 @@ test('Accounts, RBAC and classroom integration on isolated MongoDB', async (t) =
   const db = client.db('accounts_test');
   await ensureIndexes(db);
   const c = collections(db);
-  const emails: { email: string; link: string }[] = [];
+  const emails: { email: string; link: string; kind: string }[] = [];
   const config: Config = {
     jwtSecret: 'test-secret-that-is-long-enough-for-local-tests',
     frontendUrl: 'http://localhost:3000',
@@ -37,8 +37,8 @@ test('Accounts, RBAC and classroom integration on isolated MongoDB', async (t) =
   };
   const app = createApp(db, config, {
     rateLimits: false,
-    mailer: async (email, link) => {
-      emails.push({ email, link });
+    mailer: async (email, link, _config, kind = 'reset') => {
+      emails.push({ email, link, kind });
     },
   });
   const post = (path: string) =>
@@ -65,6 +65,7 @@ test('Accounts, RBAC and classroom integration on isolated MongoDB', async (t) =
     bio: '',
     weeklyGoal: 3,
     tokenVersion: 0,
+    emailVerifiedAt: new Date(),
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -80,28 +81,100 @@ test('Accounts, RBAC and classroom integration on isolated MongoDB', async (t) =
   let classCode: string;
 
   await t.test(
-    'registration rejects ADMIN escalation, rejects duplicate and weak passwords, hashes credentials',
+    'registration requires a matching password and a one-time email link before a session',
     async () => {
       await post('/auth/register')
-        .send({ name: 'Hacker', email: 'bad@example.com', password, role: 'ADMIN' })
+        .send({
+          name: 'Hacker',
+          email: 'bad@example.com',
+          password,
+          confirmPassword: password,
+          role: 'ADMIN',
+        })
         .expect(400);
       await post('/auth/register')
-        .send({ name: 'Weak', email: 'weak@example.com', password: '123' })
+        .send({ name: 'Weak', email: 'weak@example.com', password: '123', confirmPassword: '123' })
         .expect(400);
-      const teacher = await post('/auth/register')
-        .send({ name: 'Teacher One', email: 'Teacher@example.com', password, role: 'TEACHER' })
+      await post('/auth/register')
+        .send({
+          name: 'Mismatch',
+          email: 'mismatch@example.com',
+          password,
+          confirmPassword: 'OtherPass123!',
+          role: 'STUDENT',
+        })
+        .expect(400);
+      assert.equal(await c.users.countDocuments({ email: 'mismatch@example.com' }), 0);
+      const pending = await post('/auth/register')
+        .send({
+          name: 'Pending',
+          email: 'pending@example.com',
+          password,
+          confirmPassword: password,
+          role: 'STUDENT',
+        })
         .expect(201);
+      assert.equal(pending.body.accessToken, undefined);
+      assert.equal(pending.headers['set-cookie'], undefined);
+      await post('/auth/login').send({ email: 'pending@example.com', password }).expect(403);
+      const pendingMail = emails.find((item) => item.email === 'pending@example.com');
+      assert.equal(pendingMail?.kind, 'verify');
+      const pendingToken = new URL(pendingMail!.link).searchParams.get('token');
+      await c.users.updateOne(
+        { email: 'pending@example.com' },
+        { $set: { verifyExpiresAt: new Date(0) } },
+      );
+      await post('/auth/verify-email').send({ token: pendingToken }).expect(400);
+      const known = await post('/auth/resend-verification')
+        .send({ email: 'pending@example.com' })
+        .expect(200);
+      const unknown = await post('/auth/resend-verification')
+        .send({ email: 'unknown@example.com' })
+        .expect(200);
+      assert.deepEqual(known.body, unknown.body);
+      assert.equal(known.body.token, undefined);
+      const resent = emails.filter((item) => item.email === 'pending@example.com').at(-1)!;
+      const freshToken = new URL(resent.link).searchParams.get('token');
+      const verifiedPending = await post('/auth/verify-email')
+        .send({ token: freshToken })
+        .expect(200);
+      assert.equal(verifiedPending.body.user.email, 'pending@example.com');
+      await post('/auth/verify-email').send({ token: freshToken }).expect(400);
+      await post('/auth/login').send({ email: 'pending@example.com', password }).expect(200);
+
+      const openAccount = async (body: {
+        name: string;
+        email: string;
+        role: 'TEACHER' | 'STUDENT';
+      }) => {
+        const created = await post('/auth/register')
+          .send({ ...body, password, confirmPassword: password })
+          .expect(201);
+        assert.equal(created.body.accessToken, undefined);
+        const sent = emails.filter((item) => item.email === body.email.toLowerCase()).at(-1)!;
+        const token = new URL(sent.link).searchParams.get('token');
+        return post('/auth/verify-email').send({ token }).expect(200);
+      };
+      const teacher = await openAccount({
+        name: 'Teacher One',
+        email: 'Teacher@example.com',
+        role: 'TEACHER',
+      });
       teacherToken = teacher.body.accessToken;
       teacherId = teacher.body.user.id;
       assert.equal(teacher.body.user.email, 'teacher@example.com');
       assert.equal(teacher.body.user.passwordHash, undefined);
-      const other = await post('/auth/register')
-        .send({ name: 'Teacher Two', email: 'other@example.com', password, role: 'TEACHER' })
-        .expect(201);
+      const other = await openAccount({
+        name: 'Teacher Two',
+        email: 'other@example.com',
+        role: 'TEACHER',
+      });
       otherTeacherToken = other.body.accessToken;
-      const student = await post('/auth/register')
-        .send({ name: 'Student One', email: 'student@example.com', password, role: 'STUDENT' })
-        .expect(201);
+      const student = await openAccount({
+        name: 'Student One',
+        email: 'student@example.com',
+        role: 'STUDENT',
+      });
       studentToken = student.body.accessToken;
       studentId = student.body.user.id;
       studentCookie = cookie(student);
@@ -110,9 +183,71 @@ test('Accounts, RBAC and classroom integration on isolated MongoDB', async (t) =
       const stored = await c.users.findOne({ email: 'student@example.com' });
       assert.ok(stored?.passwordHash?.startsWith('$2b$'));
       assert.notEqual(stored.passwordHash, password);
+      assert.ok(stored?.emailVerifiedAt instanceof Date);
       await post('/auth/register')
-        .send({ name: 'Duplicate', email: 'STUDENT@example.com', password, role: 'STUDENT' })
+        .send({
+          name: 'Duplicate',
+          email: 'STUDENT@example.com',
+          password,
+          confirmPassword: password,
+          role: 'STUDENT',
+        })
         .expect(409);
+    },
+  );
+  await t.test(
+    'password accounts created before verification stay signed out until the email link is opened',
+    async () => {
+      const legacy: User = {
+        _id: new ObjectId(),
+        email: 'legacy@example.com',
+        name: 'Legacy User',
+        role: 'STUDENT',
+        status: 'ACTIVE',
+        passwordHash: await hashPassword(password),
+        avatar: '',
+        phone: '',
+        bio: '',
+        weeklyGoal: 3,
+        tokenVersion: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      await c.users.insertOne(legacy);
+      const refresh = randomToken();
+      const sessionId = new ObjectId();
+      await c.sessions.insertOne({
+        _id: sessionId,
+        userId: legacy._id,
+        tokenHash: digest(refresh),
+        usedHashes: [],
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 86400000),
+        revoked: false,
+        tokenVersion: 0,
+      });
+      const bearer = accessToken(legacy, sessionId, config);
+      await get('/me', bearer).expect(403);
+      await post('/auth/refresh').set('Cookie', `qs_refresh=${refresh}`).expect(401);
+      await post('/auth/login').send({ email: legacy.email, password }).expect(403);
+      const known = await post('/auth/resend-verification')
+        .send({ email: legacy.email })
+        .expect(200);
+      const unknown = await post('/auth/resend-verification')
+        .send({ email: 'nobody-legacy@example.com' })
+        .expect(200);
+      assert.deepEqual(known.body, unknown.body);
+      assert.equal(known.body.token, undefined);
+      const sent = emails
+        .filter((item) => item.email === legacy.email && item.kind === 'verify')
+        .at(-1);
+      assert.ok(sent);
+      const verified = await post('/auth/verify-email')
+        .send({ token: new URL(sent.link).searchParams.get('token') })
+        .expect(200);
+      assert.equal(verified.body.user.email, legacy.email);
+      await get('/me', verified.body.accessToken).expect(200);
+      await post('/auth/login').send({ email: legacy.email, password }).expect(200);
     },
   );
   await t.test(
@@ -332,8 +467,9 @@ test('Accounts, RBAC and classroom integration on isolated MongoDB', async (t) =
         .expect(200);
       assert.deepEqual(known.body, unknown.body);
       assert.equal(known.body.token, undefined);
-      assert.equal(emails.length, 1);
-      const token = new URL(emails[0].link).searchParams.get('token');
+      const resets = emails.filter((item) => item.kind === 'reset');
+      assert.equal(resets.length, 1);
+      const token = new URL(resets[0].link).searchParams.get('token');
       assert.ok(token);
       const stored = await c.users.findOne({ email: 'student@example.com' });
       assert.notEqual(stored?.resetHash, token);
@@ -356,7 +492,9 @@ test('Accounts, RBAC and classroom integration on isolated MongoDB', async (t) =
       );
       await post('/auth/reset-password')
         .send({
-          token: new URL(emails[1].link).searchParams.get('token'),
+          token: new URL(
+            emails.filter((item) => item.kind === 'reset').at(-1)!.link,
+          ).searchParams.get('token'),
           password: 'ExpiredPass123!',
         })
         .expect(400);

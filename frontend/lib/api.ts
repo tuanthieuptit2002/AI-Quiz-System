@@ -48,6 +48,17 @@ export function refreshSession(): Promise<AuthResult> {
 }
 async function authenticatedResponse(path: string, options: RequestInit = {}) {
   let response = await send(path, options);
+  if (response.status === 403 && !path.startsWith('/auth/')) {
+    const preview = await response
+      .clone()
+      .json()
+      .catch(() => ({ message: '' }));
+    if (String(preview.message || '').includes('xác minh')) {
+      token = null;
+      window.dispatchEvent(new Event('session-expired'));
+      throw new ApiError(403, preview.message);
+    }
+  }
   if (response.status === 401 && !path.startsWith('/auth/')) {
     try {
       await refreshSession();

@@ -19,6 +19,10 @@ export interface User {
   lastLoginAt?: Date;
   resetHash?: string;
   resetExpiresAt?: Date;
+  /** A `Date` means the address was confirmed. `null` or missing means the account still cannot sign in. */
+  emailVerifiedAt?: Date | null;
+  verifyHash?: string;
+  verifyExpiresAt?: Date;
 }
 export function userDto(user: User) {
   return {
@@ -35,4 +39,7 @@ export function userDto(user: User) {
     lastLoginAt: user.lastLoginAt,
     hasPassword: Boolean(user.passwordHash),
   };
+}
+export function emailIsVerified(user: { emailVerifiedAt?: Date | null }) {
+  return user.emailVerifiedAt instanceof Date;
 }

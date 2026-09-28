@@ -60,10 +60,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const timer = setInterval(reconnect, 5000);
     return () => clearInterval(timer);
   }, [connectionError, reconnect]);
-  const accept = (result: AuthResult) => {
+  const accept = useCallback((result: AuthResult) => {
     setAccessToken(result.accessToken);
     setUser(result.user);
-  };
+  }, []);
   const logout = async () => {
     await api('/auth/logout', { method: 'POST' });
     try {
