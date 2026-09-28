@@ -40,7 +40,7 @@
   color: #16896c;
 }
 .ep-brand small {
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 1.5px;
   color: #8c9b94;
   padding-left: 14px;
@@ -57,7 +57,7 @@
   align-items: center;
   gap: 7px;
   color: #739080;
-  font-size: 11px;
+  font-size: 13px;
 }
 .ep-connection.is-offline {
   color: #b78136;
@@ -75,7 +75,7 @@
   margin-bottom: 30px;
 }
 .ep-heading .eyebrow {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 1.8px;
 }
 .ep-heading h1 {
@@ -88,7 +88,7 @@
 }
 .ep-heading p {
   color: #8b9a93;
-  font-size: 12px;
+  font-size: 13px;
 }
 .ep-clock {
   display: flex;
@@ -105,7 +105,7 @@
   display: block;
   letter-spacing: 1.1px;
   color: #789781;
-  font-size: 8px;
+  font-size: 12px;
   margin-bottom: 7px;
 }
 .ep-clock strong {
@@ -175,7 +175,7 @@
 .ep-question-heading small {
   display: block;
   color: #8c9b92;
-  font-size: 10px;
+  font-size: 13px;
   margin-top: 4px;
 }
 .ep-flag {
@@ -187,7 +187,7 @@
   background: white;
   color: #829388;
   padding: 9px 12px;
-  font-size: 11px;
+  font-size: 13px;
 }
 .ep-flag.is-flagged {
   background: #fff5df;
@@ -207,7 +207,7 @@
   margin: 0 0 19px;
 }
 .ep-answer-hint {
-  font-size: 11px;
+  font-size: 13px;
   color: #91a097;
   margin-bottom: 20px;
 }
@@ -232,7 +232,7 @@
   border-radius: 6px;
   background: #f1f5f2;
   color: #84978a;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -261,7 +261,7 @@
   margin: 8px 0 0;
 }
 .ep-question-tools .text-link {
-  font-size: 11px;
+  font-size: 13px;
   color: #93a096;
 }
 .ep-question-tools .exam-save-status {
@@ -277,7 +277,7 @@
 }
 .ep-navigation > span {
   color: #9ba79f;
-  font-size: 11px;
+  font-size: 13px;
 }
 .ep-sidebar {
   position: sticky;
@@ -310,7 +310,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 10px;
+  font-size: 12px;
   color: #94a096;
   margin-bottom: 11px;
 }
@@ -369,7 +369,7 @@
 .ep-counts span {
   grid-column: span 2;
   color: #8a9a90;
-  font-size: 9px;
+  font-size: 11px;
 }
 .ep-map-filter {
   display: flex;
@@ -379,7 +379,7 @@
   padding-top: 18px;
   border-top: 1px solid #edf1ee;
   margin-bottom: 16px;
-  font-size: 10px;
+  font-size: 12px;
   color: #8a9c8f;
 }
 .ep-map-filter select {
@@ -387,7 +387,7 @@
   border: 0;
   background: #f6f8f6;
   color: #6d8475;
-  font-size: 10px;
+  font-size: 12px;
   padding: 6px;
   border-radius: 6px;
 }
@@ -406,7 +406,7 @@
   color: #899f8f;
   border: 1px solid #edf1ee;
   border-radius: 7px;
-  font-size: 11px;
+  font-size: 13px;
 }
 .ep-question-map button.answered {
   background: #e5f3e9;
@@ -441,7 +441,7 @@
 .ep-map-legend {
   display: flex;
   gap: 19px;
-  font-size: 9px;
+  font-size: 11px;
   color: #97a399;
   margin: 17px 0 24px;
 }
@@ -467,7 +467,7 @@
   gap: 8px;
   line-height: 1.75;
   color: #8c9e92;
-  font-size: 10px;
+  font-size: 12px;
   margin: 18px 0 0;
 }
 .ep-rule svg {
@@ -482,7 +482,7 @@
   align-items: center;
   margin-top: 36px;
   padding: 20px 0;
-  font-size: 10px;
+  font-size: 12px;
   color: #9ca9a0;
 }
 .ep-footer span {
@@ -499,7 +499,7 @@
   border: 1px solid #d8e9de;
   color: #527960;
   border-radius: 10px;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.7;
   margin: 0 0 20px;
 }
@@ -533,7 +533,7 @@
   font-size: 16px;
 }
 .ep-conflicts p {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.8;
   color: #a08b69;
   margin: 12px 0;
@@ -573,12 +573,12 @@
 }
 .ep-submit-summary span {
   display: block;
-  font-size: 11px;
+  font-size: 13px;
   color: #8da093;
   margin-top: 8px;
 }
 .ep-confirm-note {
-  font-size: 12px;
+  font-size: 13px;
   color: #9c8d6e;
   line-height: 1.9;
   margin-bottom: 15px;
@@ -675,7 +675,7 @@
     grid-template-columns: repeat(10, 1fr);
   }
   .ep-counts span {
-    font-size: 11px;
+    font-size: 13px;
   }
 }
 @media (max-width: 480px) {
@@ -701,13 +701,13 @@
   }
   .ep-clock small {
     margin: 0;
-    font-size: 8px;
+    font-size: 12px;
   }
   .ep-brand b {
     font-size: 20px;
   }
   .ep-topbar-right .btn {
-    font-size: 10px;
+    font-size: 12px;
     padding: 8px 10px;
   }
   .ep-question-heading {
@@ -718,7 +718,7 @@
     display: none;
   }
   .ep-flag {
-    font-size: 10px;
+    font-size: 12px;
     padding: 8px 9px;
   }
   .ep-question-body {
@@ -730,7 +730,7 @@
   .ep-question-body .exam-answer-options label {
     padding: 13px;
     gap: 9px;
-    font-size: 12px;
+    font-size: 13px;
   }
   .ep-option-letter {
     width: 23px;
@@ -740,7 +740,7 @@
     gap: 10px;
   }
   .ep-navigation .btn {
-    font-size: 11px;
+    font-size: 13px;
   }
   .ep-navigation > span {
     display: none;
@@ -760,7 +760,7 @@
   .ep-banner {
     flex-wrap: wrap;
     gap: 9px;
-    font-size: 11px;
+    font-size: 13px;
   }
   .ep-footer {
     flex-direction: column;

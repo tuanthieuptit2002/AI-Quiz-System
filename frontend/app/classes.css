@@ -13,7 +13,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 10px;
+  font-size: 12px;
   color: #5f8d43;
   background: #eef5e8;
   border-radius: 999px;
@@ -43,7 +43,7 @@
   align-items: center;
   gap: 6px;
   color: #5d7c6d;
-  font-size: 12px;
+  font-size: 13px;
   margin-bottom: 16px;
 }
 .cd-back:hover {
@@ -91,7 +91,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: 13px;
   color: #4d6a44;
   background: #ffffffa6;
   border-radius: 999px;
@@ -106,7 +106,7 @@
   overflow-wrap: anywhere;
 }
 .cd-hero p {
-  font-size: 12px;
+  font-size: 13px;
   color: #5b7160;
   margin-top: 6px;
   line-height: 1.7;
@@ -124,7 +124,7 @@
   box-shadow: 0 6px 20px #1a3a2a0d;
 }
 .cd-invite > small {
-  font-size: 10px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: #7b8c80;
@@ -149,7 +149,7 @@
   color: #1f5d49;
 }
 .cd-link {
-  font-size: 11px;
+  font-size: 13px;
   color: #5d6f64;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -162,7 +162,7 @@
   align-items: center;
   gap: 5px;
   background: none;
-  font-size: 11px;
+  font-size: 13px;
   color: #6f8a7b;
   padding: 2px 0;
 }
@@ -181,7 +181,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px 22px;
-  font-size: 12px;
+  font-size: 13px;
   color: #6c7f73;
   margin: 4px 2px 18px;
 }
@@ -232,7 +232,7 @@
   border-radius: 8px;
   background: #edf5f1;
   color: var(--primary);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   display: grid;
   place-items: center;
@@ -253,7 +253,7 @@
   overflow-wrap: anywhere;
 }
 .cd-lesson-title small {
-  font-size: 10px;
+  font-size: 13px;
   color: #8a9a90;
 }
 .cd-lesson-body {
@@ -264,7 +264,7 @@
 }
 .cd-lesson-body p {
   white-space: pre-wrap;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.8;
   color: #3b4f43;
   overflow-wrap: anywhere;
@@ -274,7 +274,7 @@
   align-items: center;
   gap: 6px;
   margin-top: 10px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--primary);
   font-weight: 500;
 }
@@ -317,7 +317,7 @@
   overflow-wrap: anywhere;
 }
 .cd-assign-main > small {
-  font-size: 11px;
+  font-size: 13px;
   color: #8a9a90;
 }
 .cd-assign-meta,
@@ -325,7 +325,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px 16px;
-  font-size: 11px;
+  font-size: 13px;
   color: #6c7f73;
 }
 .cd-assign-meta span {
@@ -349,7 +349,7 @@
 .cd-chip {
   display: inline-flex;
   align-items: center;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   border-radius: 999px;
   padding: 3px 9px;
@@ -429,12 +429,12 @@
   overflow-wrap: anywhere;
 }
 .cd-exam-picker small {
-  font-size: 11px;
+  font-size: 13px;
   color: #849489;
 }
 .cd-exam-picker em {
   font-style: normal;
-  font-size: 10px;
+  font-size: 12px;
   color: #6e7f75;
 }
 .cd-assign-form {
@@ -465,7 +465,7 @@
   overflow-wrap: anywhere;
 }
 .cd-result-head p {
-  font-size: 11px;
+  font-size: 13px;
   color: #7b8c80;
   margin-top: 4px;
 }
@@ -481,7 +481,7 @@
   background: #f5f8f6;
   border-radius: 9px;
   padding: 9px 12px;
-  font-size: 10px;
+  font-size: 12px;
   color: #7b8c80;
 }
 .cd-result-summary b {
@@ -494,7 +494,7 @@
 }
 .cd-result-table td small {
   display: block;
-  font-size: 10px;
+  font-size: 13px;
   color: #8a9a90;
   margin-top: 3px;
 }
@@ -506,7 +506,7 @@
 }
 .cd-no-students {
   padding: 0 23px 20px;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .exam-card.focused {

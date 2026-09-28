@@ -50,7 +50,7 @@
 }
 .gr-score > span:first-child {
   color: #c8e8dc;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 1.4px;
 }
@@ -72,7 +72,7 @@
 }
 .gr-score p {
   color: #dcf0e7;
-  font-size: 12px;
+  font-size: 13px;
   margin: 0 0 18px;
   line-height: 1.5;
 }
@@ -83,7 +83,7 @@
   border: 1px solid #a0caba45;
   border-radius: 7px;
   padding: 5px 8px;
-  font-size: 10px;
+  font-size: 12px;
   color: #c8e8dc;
 }
 .gr-metrics {
@@ -128,7 +128,7 @@
   line-height: 1.2;
 }
 .gr-metrics > div > span:last-child {
-  font-size: 11px;
+  font-size: 13px;
   color: #6a8079;
 }
 .gr-duration {
@@ -139,7 +139,7 @@
   gap: 8px;
   border-top: 1px solid var(--border);
   padding-top: 14px;
-  font-size: 12px;
+  font-size: 13px;
   color: #657c73;
   flex-wrap: wrap;
 }
@@ -149,7 +149,7 @@
 }
 .gr-duration small {
   margin-left: auto;
-  font-size: 11px;
+  font-size: 13px;
 }
 .gr-notice {
   display: flex;
@@ -160,7 +160,7 @@
   border: 1px solid #dce9e2;
   border-radius: 11px;
   padding: 13px 16px;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.6;
   margin-bottom: 18px;
 }
@@ -181,7 +181,7 @@
   flex-wrap: wrap;
 }
 .gr-review-toolbar > span {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
 }
 .gr-filters {
@@ -198,7 +198,7 @@
   color: #688075;
   padding: 9px 11px;
   border-radius: 7px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   display: inline-flex;
   gap: 6px;
@@ -210,7 +210,7 @@
   box-shadow: 0 1px 4px #1e463910;
 }
 .gr-filters button span {
-  font-size: 10px;
+  font-size: 12px;
   color: #ad742b;
   background: #fff2da;
   border-radius: 4px;
@@ -229,7 +229,7 @@
   top: 20px;
 }
 .gr-question-nav > b {
-  font-size: 11px;
+  font-size: 13px;
 }
 .gr-question-nav > div {
   display: grid;
@@ -245,7 +245,7 @@
   border-radius: 8px;
   color: #2d7155;
   height: 30px;
-  font-size: 11px;
+  font-size: 13px;
   position: relative;
 }
 .gr-question-nav button.pending {
@@ -266,7 +266,7 @@
   font-size: 17px;
 }
 .gr-question-nav > p {
-  font-size: 9px;
+  font-size: 11px;
   color: #81928b;
   line-height: 1.8;
   margin: 14px 0 0;
@@ -281,7 +281,7 @@
   align-items: center;
   gap: 12px;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 13px;
   color: #83928d;
 }
 .gr-answer-card h2 {
@@ -299,7 +299,7 @@
 }
 .gr-answer-block > span,
 .gr-reference > span {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 1px;
   color: #809189;
   font-weight: 700;
@@ -318,7 +318,7 @@
   margin: 26px 0;
 }
 .gr-reference p {
-  font-size: 12px;
+  font-size: 13px;
   color: #668070;
 }
 .gr-question-pager {
@@ -327,7 +327,7 @@
   margin-top: 25px;
 }
 .gr-question-pager > span {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
 }
 .gr-decision-column {
@@ -354,7 +354,7 @@
   margin: 0;
 }
 .gr-manual > p {
-  font-size: 12px;
+  font-size: 13px;
   color: #6d8278;
   margin: 16px 0;
 }
@@ -362,18 +362,18 @@
   margin-bottom: 14px;
 }
 .gr-manual .field > span {
-  font-size: 11px;
+  font-size: 13px;
 }
 .gr-manual input {
   font-size: 22px;
   font-weight: 600;
 }
 .gr-manual textarea {
-  font-size: 12px;
+  font-size: 13px;
 }
 .gr-manual > .btn {
   width: 100%;
-  font-size: 12px;
+  font-size: 13px;
   margin-top: 4px;
 }
 .gr-manual > small,
@@ -381,7 +381,7 @@
   display: block;
   margin-top: 12px;
   color: #85958e;
-  font-size: 10px;
+  font-size: 13px;
   line-height: 1.6;
 }
 .gr-manual small.gr-draft-note {
@@ -406,11 +406,11 @@
 }
 .gr-ai header p {
   margin: 3px 0 0;
-  font-size: 10px;
+  font-size: 12px;
   color: #8a91a4;
 }
 .gr-ai > p {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.7;
   color: #768297;
 }
@@ -433,7 +433,7 @@
   color: #6671a1;
 }
 .gr-proposed-score > span {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.8px;
 }
@@ -446,12 +446,12 @@
   font-weight: 400;
 }
 .gr-ai-proposal h3 {
-  font-size: 12px;
+  font-size: 13px;
   margin: 20px 0 6px;
 }
 .gr-ai-proposal p,
 .gr-ai-proposal li {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.75;
   color: #6c7888;
   white-space: pre-wrap;
@@ -465,7 +465,7 @@
   border-left: 2px solid #bcc3e1;
   padding: 8px 12px;
   margin: 10px 0;
-  font-size: 11px;
+  font-size: 13px;
   background: #f0f2f9;
   border-radius: 0 6px 6px 0;
   line-height: 1.7;
@@ -487,12 +487,12 @@
 }
 .gr-proposal-actions .btn,
 .gr-proposal-actions .text-link {
-  font-size: 10px;
+  font-size: 12px;
 }
 .gr-ai .gr-request-ai {
   width: 100%;
   margin-top: 18px;
-  font-size: 12px;
+  font-size: 13px;
 }
 .gr-auto-points {
   font-size: 40px;
@@ -536,12 +536,12 @@
 }
 .gr-history header span {
   color: var(--primary);
-  font-size: 11px;
+  font-size: 13px;
 }
 .gr-history p,
 .gr-history small,
 .gr-history summary {
-  font-size: 12px;
+  font-size: 13px;
   color: #82948a;
 }
 .gr-history blockquote {
@@ -626,13 +626,13 @@
   }
   .gr-filters button {
     padding: 8px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .gr-duration small {
     margin-left: 0;
   }
   .gr-metrics > div > span:last-child {
-    font-size: 10px;
+    font-size: 12px;
   }
   .gr-result-title h1 {
     font-size: 25px;
@@ -650,7 +650,7 @@
 .activity-session,
 .activity-empty {
   color: #73827c;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.55;
 }
 .activity-counts {
@@ -663,7 +663,7 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 6px 10px;
-  font-size: 12px;
+  font-size: 13px;
   color: #3e5146;
 }
 .activity-counts b {

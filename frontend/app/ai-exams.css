@@ -27,7 +27,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
 }
 .ae-steps li > span {
@@ -38,7 +38,7 @@
   border: 1px solid var(--border);
   border-radius: 50%;
   background: white;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
 }
 .ae-steps .is-current {
@@ -87,7 +87,7 @@
 .ae-panel-title p {
   margin-top: 6px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.6;
 }
 .ae-symbol {
@@ -123,14 +123,14 @@
 }
 .ae-prompt-tools small {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
   white-space: nowrap;
 }
 .ae-prompt-tools .text-link {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: 13px;
 }
 .ae-fields {
   display: grid;
@@ -144,7 +144,7 @@
   grid-template-columns: repeat(3, 1fr);
 }
 .ae-hint {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.75;
   color: var(--muted);
   margin: 12px 0;
@@ -160,7 +160,7 @@
   justify-content: center;
   gap: 7px;
   color: #84928c;
-  font-size: 10px;
+  font-size: 12px;
   margin-top: 15px;
   line-height: 1.6;
 }
@@ -177,7 +177,7 @@
 }
 .ae-example-caption {
   color: #738a7d;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 650;
   letter-spacing: 1.35px;
 }
@@ -204,11 +204,11 @@
   gap: 6px;
   align-items: center;
   color: #537e6e;
-  font-size: 12px;
+  font-size: 13px;
 }
 .ae-example-label {
   display: block;
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 1.25px;
   color: #7b8e82;
   margin-bottom: 22px;
@@ -220,7 +220,7 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  font-size: 12px;
+  font-size: 13px;
   margin-bottom: 9px;
 }
 .ae-example-row b {
@@ -229,7 +229,7 @@
 .ae-example-row small {
   font-weight: 400;
   color: #89978e;
-  font-size: 10px;
+  font-size: 13px;
 }
 .ae-bar {
   height: 5px;
@@ -255,7 +255,7 @@
   color: #4e8d76;
 }
 .ae-example-note p {
-  font-size: 11px;
+  font-size: 13px;
   color: #7d8f85;
   line-height: 1.85;
 }
@@ -264,7 +264,7 @@
   color: #527563;
 }
 .ae-example > .ae-hint {
-  font-size: 10px;
+  font-size: 12px;
   text-align: center;
   margin-top: 26px;
 }
@@ -275,7 +275,7 @@
   gap: 10px;
   margin: 0 0 18px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 .ae-job-strip > div {
   display: flex;
@@ -295,15 +295,15 @@
   place-items: center;
   color: var(--primary);
   font-weight: 600;
-  font-size: 12px;
+  font-size: 13px;
 }
 .ae-valid {
   color: var(--primary);
-  font-size: 12px;
+  font-size: 13px;
 }
 .ae-invalid {
   color: #bf5a5a;
-  font-size: 12px;
+  font-size: 13px;
 }
 .ae-distribution {
   height: 10px;
@@ -332,7 +332,7 @@
   align-items: center;
   gap: 9px;
   margin-bottom: 16px;
-  font-size: 12px;
+  font-size: 13px;
 }
 .ae-topic-dot {
   width: 9px;
@@ -342,7 +342,7 @@
 .ae-section-head > span:nth-last-child(2) {
   margin-left: auto;
   color: var(--primary);
-  font-size: 11px;
+  font-size: 13px;
 }
 .ae-topic-fields {
   grid-template-columns: 1.4fr 0.65fr 1fr 1.2fr;
@@ -353,7 +353,7 @@
   gap: 18px;
   flex-wrap: wrap;
   margin-top: 7px;
-  font-size: 11px;
+  font-size: 13px;
   color: #718279;
 }
 .ae-coverage span {
@@ -405,7 +405,7 @@
 }
 .ae-progress small {
   color: #829288;
-  font-size: 11px;
+  font-size: 13px;
 }
 .ae-failure {
   margin-bottom: 22px;
@@ -424,7 +424,7 @@
 }
 .ae-review-header p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.7;
 }
 .ae-review-facts {
@@ -438,7 +438,7 @@
   gap: 6px;
   align-items: center;
   color: #718379;
-  font-size: 12px;
+  font-size: 13px;
 }
 .ae-review-facts b {
   color: var(--foreground);
@@ -454,7 +454,7 @@
   gap: 7px;
   align-items: center;
   color: #78867f;
-  font-size: 11px;
+  font-size: 13px;
 }
 .ae-legend i {
   width: 8px;
@@ -493,7 +493,7 @@
   color: #72867a;
   border-radius: 7px;
   padding: 3px 7px;
-  font-size: 11px;
+  font-size: 13px;
   margin-left: 6px;
 }
 .ae-question-toolbar select {
@@ -502,7 +502,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   background: white;
-  font-size: 12px;
+  font-size: 13px;
 }
 .ae-question-list {
   display: grid;
@@ -519,7 +519,7 @@
   gap: 10px;
   flex-wrap: wrap;
   margin-bottom: 16px;
-  font-size: 11px;
+  font-size: 13px;
 }
 .ae-question-top > span:nth-child(2) {
   color: var(--muted);
@@ -528,7 +528,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 9px;
+  font-size: 11px;
   padding: 4px 8px;
   border-radius: 5px;
   margin-left: auto;
@@ -557,7 +557,7 @@
   padding-top: 15px;
 }
 .ae-question-actions .btn {
-  font-size: 11px;
+  font-size: 13px;
   padding: 8px 11px;
 }
 .ae-history {
@@ -589,7 +589,7 @@
 }
 .ae-history small {
   display: block;
-  font-size: 10px;
+  font-size: 13px;
   margin-top: 7px;
   color: var(--muted);
 }
@@ -599,7 +599,7 @@
   align-items: center;
   gap: 15px;
   margin-top: 20px;
-  font-size: 12px;
+  font-size: 13px;
 }
 @media (max-width: 1180px) {
   .ae-create-grid {
@@ -631,7 +631,7 @@
   }
   .ae-steps li {
     flex: 1;
-    font-size: 10px;
+    font-size: 12px;
     flex-direction: column;
     align-items: flex-start;
     line-height: 1.6;
@@ -680,7 +680,7 @@
     align-items: flex-start;
   }
   .ae-prompt-tools .text-link {
-    font-size: 10px;
+    font-size: 12px;
   }
   .ae-history > button {
     flex-wrap: wrap;
@@ -690,7 +690,7 @@
     display: none;
   }
   .ae-history .qb-badge {
-    font-size: 9px;
+    font-size: 11px;
   }
   .ae-footer-actions > .btn {
     flex-grow: 1;

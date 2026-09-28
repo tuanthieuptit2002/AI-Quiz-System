@@ -22,7 +22,7 @@
 }
 .docs-group h2 small {
   margin-left: 2px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--muted);
 }
@@ -56,7 +56,7 @@
 }
 .docs-card p {
   flex: 1;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.7;
   color: #7d8c86;
 }
@@ -64,7 +64,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--primary);
 }
@@ -91,7 +91,7 @@
   align-items: center;
   gap: 7px;
   padding: 0 6px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--primary);
 }
@@ -105,7 +105,7 @@
 }
 .docs-nav-group > span {
   padding: 0 8px 6px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 1.2px;
   text-transform: uppercase;
@@ -114,7 +114,7 @@
 .docs-nav-group a {
   padding: 7px 9px;
   border-radius: 7px;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.45;
   color: #5d6f67;
 }
@@ -199,7 +199,7 @@
   justify-content: center;
   background: #e9f5f0;
   color: var(--primary);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
 }
 .docs-points {
@@ -247,7 +247,7 @@
 }
 .docs-shot figcaption {
   margin-top: 8px;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.6;
   text-align: center;
   color: var(--muted);
@@ -269,11 +269,11 @@
 .docs-tip b {
   display: block;
   margin-bottom: 3px;
-  font-size: 12px;
+  font-size: 13px;
   color: #7d6212;
 }
 .docs-tip p {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.75;
   color: #6f5e2a;
 }
@@ -305,7 +305,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
 }
 .docs-pager b {
@@ -355,7 +355,7 @@
   background: #f1f5f3;
   border: 2px solid #e4ebe8;
   color: #8a9a93;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   transition:
     background 0.15s,
@@ -377,7 +377,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 10px;
+  font-size: 13px;
   color: #93a29b;
 }
 .tour-stepper li.active small {
@@ -404,7 +404,7 @@
 .tour-count {
   display: block;
   margin-top: 14px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: #8fa99c;
 }
@@ -430,7 +430,7 @@
 .tour-body li {
   display: flex;
   gap: 8px;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.6;
   color: #4f625a;
 }
@@ -448,7 +448,7 @@
   border-radius: 999px;
   background: #fff;
   border: 1px solid #dcebe4;
-  font-size: 11px;
+  font-size: 13px;
   color: #6f8279;
 }
 .tour-menu b {

@@ -53,7 +53,7 @@
 .qb-stats div > span:not(.qb-stat-icon) {
   display: block;
   margin-top: 5px;
-  font-size: 12px;
+  font-size: 13px;
   color: #73827c;
 }
 .qb-bank-layout {
@@ -88,13 +88,13 @@
   background: transparent;
   border-radius: 8px;
   text-align: left;
-  font-size: 12px;
+  font-size: 13px;
 }
 .qb-tree-all > span,
 .qb-tree-group button > span:last-child,
 .qb-tree-group small {
   margin-left: auto;
-  font-size: 11px;
+  font-size: 13px;
   color: #7b8c84;
 }
 .qb-taxonomy button:hover {
@@ -117,7 +117,7 @@
   color: #63766b;
 }
 .qb-tree-hint {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.8;
   padding: 16px 10px;
 }
@@ -128,10 +128,10 @@
   border-radius: 10px;
 }
 .qb-taxonomy-tip b {
-  font-size: 12px;
+  font-size: 13px;
 }
 .qb-taxonomy-tip p {
-  font-size: 11px;
+  font-size: 13px;
   color: #708779;
   line-height: 1.8;
   margin-top: 7px;
@@ -156,7 +156,7 @@
 }
 .qb-library-heading p {
   color: #7a8b80;
-  font-size: 12px;
+  font-size: 13px;
   margin-top: 7px;
   overflow-wrap: anywhere;
 }
@@ -177,7 +177,7 @@
 }
 .qb-filter-selects select {
   padding: 9px 24px 9px 11px;
-  font-size: 12px;
+  font-size: 13px;
   min-width: 0;
 }
 .qb-active-filter {
@@ -185,7 +185,7 @@
   align-items: center;
   justify-content: space-between;
   margin-top: 14px;
-  font-size: 12px;
+  font-size: 13px;
   color: #77857e;
 }
 .qb-active-filter button {
@@ -212,7 +212,7 @@
 }
 .qb-question-top > small {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
+  font-size: 13px;
   color: #93a297;
 }
 .question-badges {
@@ -224,7 +224,7 @@
 .qb-badge {
   padding: 4px 8px;
   border-radius: 5px;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.4;
   font-weight: 550;
   color: #6c7485;
@@ -243,7 +243,7 @@
   background: #fff0ed;
 }
 .qb-status {
-  font-size: 10px;
+  font-size: 12px;
   color: #89918b;
   display: flex;
   align-items: center;
@@ -282,7 +282,7 @@
   color: #16896c;
 }
 .qb-question-path {
-  font-size: 11px;
+  font-size: 13px;
   color: #87968d;
   display: flex;
   align-items: center;
@@ -299,7 +299,7 @@
   flex-wrap: wrap;
 }
 .qb-tags button {
-  font-size: 10px;
+  font-size: 12px;
   background: #f4f7f5;
   border-radius: 4px;
   padding: 3px 6px;
@@ -307,7 +307,7 @@
 }
 .qb-tags time {
   color: #929e97;
-  font-size: 10px;
+  font-size: 12px;
 }
 .qb-card-actions {
   display: flex;
@@ -340,7 +340,7 @@
 }
 .qb-editor-heading p {
   color: #7a8b80;
-  font-size: 12px;
+  font-size: 13px;
 }
 .qb-editor-layout {
   display: grid;
@@ -368,7 +368,7 @@
   font-weight: 600;
 }
 .qb-form-section h2 > span {
-  font-size: 10px;
+  font-size: 12px;
   font-family: var(--font-geist-mono), monospace;
   color: #16896c;
   background: #eaf6f0;
@@ -390,12 +390,12 @@
 }
 .question-type-option span {
   display: block;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 550;
 }
 .question-type-option small {
   display: block;
-  font-size: 10px;
+  font-size: 13px;
   color: #8c9890;
   margin-top: 4px;
 }
@@ -426,11 +426,11 @@
 }
 .qb-image-controls .btn {
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
 }
 .qb-image-controls small {
   color: #8a978f;
-  font-size: 10px;
+  font-size: 13px;
 }
 .qb-subheading {
   display: flex;
@@ -440,11 +440,11 @@
   margin-bottom: 12px;
 }
 .qb-subheading b {
-  font-size: 12px;
+  font-size: 13px;
 }
 .qb-subheading small {
   color: #85948a;
-  font-size: 10px;
+  font-size: 13px;
 }
 .answer-edit-row {
   display: flex;
@@ -473,7 +473,7 @@
   gap: 6px;
   margin-top: 15px;
   align-items: center;
-  font-size: 12px;
+  font-size: 13px;
 }
 .qb-preview-panel {
   position: sticky;
@@ -490,7 +490,7 @@
   align-items: center;
   justify-content: center;
   gap: 9px;
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 1.8px;
   background: #f0f7f3;
   padding: 16px;
@@ -526,7 +526,7 @@
   align-items: center;
   border: 1px solid #e5ece7;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 13px;
   white-space: pre-wrap;
 }
 .preview-option > span:nth-child(2) {
@@ -540,7 +540,7 @@
   background: #f1f5f2;
   border-radius: 5px;
   color: #7d9183;
-  font-size: 11px;
+  font-size: 13px;
   flex-shrink: 0;
 }
 .preview-option.is-correct {
@@ -559,7 +559,7 @@
   background: #fbfdfb;
   border-radius: 8px;
   color: #9aaba0;
-  font-size: 12px;
+  font-size: 13px;
 }
 .matching-preview {
   display: grid;
@@ -571,14 +571,14 @@
   background: #f4f7f5;
   border-radius: 7px;
   margin-bottom: 8px;
-  font-size: 12px;
+  font-size: 13px;
   white-space: pre-wrap;
 }
 .answer-toggle {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 11px;
+  font-size: 13px;
   margin-top: 22px;
 }
 .answer-explanation {
@@ -586,7 +586,7 @@
   border-radius: 9px;
   padding: 17px;
   margin-top: 17px;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.8;
 }
 .answer-explanation b {
@@ -602,7 +602,7 @@
 .qb-preview-note {
   text-align: center;
   padding: 0 24px 20px;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.8;
   color: #98a49c;
 }
@@ -643,14 +643,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 13px;
 }
 .qb-version small {
-  font-size: 10px;
+  font-size: 13px;
   color: #829087;
 }
 .qb-version p {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.6;
   margin: 7px 0;
 }
@@ -663,7 +663,7 @@
 .qb-version-taxonomy {
   padding: 16px 24px 0;
   color: #88988c;
-  font-size: 12px;
+  font-size: 13px;
 }
 .qb-version-content > .muted {
   padding: 0 24px 20px;
@@ -689,7 +689,7 @@
   font-size: 13px;
 }
 .qb-import-guide p {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.7;
   color: #7a8a7e;
   margin-top: 5px;
@@ -713,13 +713,13 @@
 }
 .qb-upload > span {
   color: #95a299;
-  font-size: 12px;
+  font-size: 13px;
 }
 .qb-upload input {
   width: auto;
   max-width: 100%;
   margin-top: 8px;
-  font-size: 12px;
+  font-size: 13px;
   padding: 8px;
 }
 .qb-import-summary {
@@ -731,14 +731,14 @@
   background: #edf9f1;
   border-radius: 8px;
   padding: 13px;
-  font-size: 12px;
+  font-size: 13px;
 }
 .qb-import-summary.has-errors {
   color: #b46a37;
   background: #fff6eb;
 }
 .qb-import-summary span {
-  font-size: 11px;
+  font-size: 13px;
 }
 .qb-import-errors,
 .qb-import-preview {
@@ -754,7 +754,7 @@
   gap: 12px;
   border-bottom: 1px solid #f3e9e2;
   padding: 10px;
-  font-size: 12px;
+  font-size: 13px;
 }
 .qb-import-errors b {
   white-space: nowrap;
@@ -772,22 +772,22 @@
 }
 .qb-import-preview > div > span {
   color: #a7b1aa;
-  font-size: 11px;
+  font-size: 13px;
 }
 .qb-import-preview b {
   display: block;
   font-weight: 500;
-  font-size: 12px;
+  font-size: 13px;
   overflow-wrap: anywhere;
 }
 .qb-import-preview small {
   display: block;
-  font-size: 10px;
+  font-size: 13px;
   margin-top: 5px;
   color: #85978b;
 }
 .qb-import-note {
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.8;
   color: #89998e;
   margin: 17px 0;
@@ -877,7 +877,7 @@
     font-size: 22px;
   }
   .qb-stats div > span:not(.qb-stat-icon) {
-    font-size: 10px;
+    font-size: 12px;
   }
   .qb-library-heading {
     padding: 18px 15px;
@@ -886,7 +886,7 @@
     font-size: 15px;
   }
   .qb-library-heading > .btn {
-    font-size: 11px;
+    font-size: 13px;
     padding: 8px;
   }
   .qb-filters {
@@ -966,7 +966,7 @@
 .qa-note,
 .qa-footnote {
   color: #73827c;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.6;
 }
 .qa-footnote {
@@ -992,10 +992,10 @@
 }
 .qa-topic {
   color: #73827c;
-  font-size: 12px;
+  font-size: 13px;
 }
 .qa-flag {
-  font-size: 11px;
+  font-size: 13px;
   border-radius: 999px;
   padding: 3px 8px;
   background: #fff5df;
@@ -1039,7 +1039,7 @@
 .qa-index span {
   display: block;
   color: #73827c;
-  font-size: 11px;
+  font-size: 13px;
 }
 .qa-metrics b,
 .qa-compare b {
@@ -1090,7 +1090,7 @@
   display: inline-block;
   margin-right: 6px;
   color: #0f6b52;
-  font-size: 10px;
+  font-size: 12px;
 }
 .qa-pager {
   display: flex;

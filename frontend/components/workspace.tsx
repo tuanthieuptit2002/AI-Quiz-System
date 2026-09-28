@@ -267,7 +267,6 @@ export function Workspace({
             <button className="quick-search" onClick={() => setSearch(true)}>
               <Search size={17} />
               <span>Tìm nhanh…</span>
-              <kbd>⌕</kbd>
             </button>
             <span className="connection-status">
               <i /> Đã kết nối

@@ -23,7 +23,7 @@
   color: #344e42;
 }
 .xe-intro p {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.7;
   color: #6c8175;
   margin: 5px 0 0;
@@ -41,7 +41,7 @@
   border: 1px solid #e8edea;
   padding: 13px;
   border-radius: 10px;
-  font-size: 12px;
+  font-size: 13px;
   min-width: 0;
 }
 .xe-options > div > span {
@@ -52,7 +52,7 @@
   background: #f0f4f2;
   border-radius: 7px;
   flex: 0 0 auto;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
 }
 .xe-options p {
@@ -62,7 +62,7 @@
   overflow-wrap: anywhere;
 }
 .xe-options small {
-  font-size: 9px;
+  font-size: 12px;
   color: #789086;
   display: flex;
   align-items: center;
@@ -112,7 +112,7 @@
   color: #4f6986;
 }
 .xe-trigger small {
-  font-size: 10px;
+  font-size: 13px;
   color: #8b99a5;
 }
 .xe-trigger > svg:last-child {
@@ -161,7 +161,7 @@
   color: #304654;
 }
 .xe-heading > div > div > span {
-  font-size: 10px;
+  font-size: 12px;
   color: #8a97a7;
 }
 .xe-orb {
@@ -179,7 +179,7 @@
   border-radius: 7px;
   border: 1px solid #e7ecf4;
   padding: 6px 9px;
-  font-size: 10px;
+  font-size: 12px;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -189,7 +189,7 @@
   padding: 0 24px 18px;
   margin: 0;
   color: #8a98a6;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.8;
   border-bottom: 1px solid #e7ecf3;
 }
@@ -211,13 +211,13 @@
   border-radius: 13px 13px 3px 13px;
 }
 .xe-student > span {
-  font-size: 8px;
+  font-size: 10px;
   letter-spacing: 1px;
   font-weight: 700;
   color: #88a092;
 }
 .xe-student > p {
-  font-size: 12px;
+  font-size: 13px;
   margin: 5px 0 0;
   line-height: 1.75;
   white-space: pre-wrap;
@@ -233,7 +233,7 @@
   box-shadow: 0 3px 6px #455c7510;
 }
 .xe-ai-name {
-  font-size: 9px;
+  font-size: 11px;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -266,11 +266,11 @@
 }
 .xe-takeaway b,
 .xe-practice b {
-  font-size: 11px;
+  font-size: 13px;
 }
 .xe-takeaway p,
 .xe-practice p {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.85;
   margin: 5px 0 0;
   white-space: pre-wrap;
@@ -283,7 +283,7 @@
   padding: 15px 2px 5px;
 }
 .xe-assistant .xe-caveat {
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.8;
   background: #fff8e9;
   border-radius: 8px;
@@ -294,7 +294,7 @@
 }
 .xe-time {
   display: block;
-  font-size: 9px;
+  font-size: 11px;
   color: #a2abb5;
   margin-top: 17px;
 }
@@ -304,26 +304,26 @@
   gap: 10px;
   padding: 22px 0;
   color: #8c98ae;
-  font-size: 12px;
+  font-size: 13px;
 }
 .xe-panel > .xe-loading {
   padding: 22px;
 }
 .xe-loading small {
   display: block;
-  font-size: 10px;
+  font-size: 13px;
   margin-top: 7px;
   color: #a2acba;
 }
 .xe-empty,
 .xe-reconnect {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.8;
   color: #7f90a1;
   padding: 18px 24px;
 }
 .xe-failed p {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.8;
   color: #a17462;
   margin: 16px 0;
@@ -335,7 +335,7 @@
   padding: 0 24px 18px;
 }
 .xe-suggestions button {
-  font-size: 11px;
+  font-size: 13px;
   border: 1px solid #dfe6f0;
   background: white;
   color: #7c8da4;
@@ -359,7 +359,7 @@
 }
 .xe-composer label {
   color: #687f8a;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   display: block;
   margin-bottom: 10px;
@@ -374,13 +374,13 @@
   background: white;
   resize: vertical;
   min-height: 64px;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.7;
   border: 1px solid #dde5ed;
   border-radius: 10px;
 }
 .xe-composer .btn {
-  font-size: 12px;
+  font-size: 13px;
   flex-shrink: 0;
 }
 .xe-composer footer {
@@ -389,7 +389,7 @@
   align-items: flex-start;
   gap: 12px;
   color: #9aa6b5;
-  font-size: 9px;
+  font-size: 11px;
   margin-top: 10px;
   line-height: 1.7;
 }
@@ -398,14 +398,14 @@
 }
 .xe-limit {
   color: #7f8da0;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.7;
   padding: 16px 24px;
 }
 .xe-image-note {
   margin-top: 20px;
   color: #8d9b96;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.7;
 }
 @media (max-width: 780px) {
@@ -462,6 +462,6 @@
     padding: 0 14px 15px;
   }
   .xe-trigger small {
-    font-size: 9px;
+    font-size: 12px;
   }
 }
