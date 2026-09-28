@@ -8,6 +8,7 @@ export function createProfileRoutes(c: Collections, config: Config) {
   const controller = createProfileController(c, config);
   router.get('/', controller.getProfile);
   router.patch('/', controller.updateProfile);
+  router.post('/onboarding', controller.completeOnboarding);
   router.put('/avatar', controller.updateAvatar);
   router.delete('/avatar', controller.deleteAvatar);
   router.put('/password', controller.changePassword);

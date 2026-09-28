@@ -10,6 +10,7 @@
 @import './practice.css';
 @import './classes.css';
 @import './notifications.css';
+@import './docs.css';
 
 :root {
   --background: #f7f9fa;
@@ -1955,29 +1956,6 @@ td b {
   color: inherit;
   background: transparent;
   margin-left: 10px;
-}
-.help-steps > div {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 19px;
-}
-.help-steps > div > span {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #eff5e8;
-  color: #90a573;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 12px;
-}
-.help-steps p {
-  font-size: 12px;
-  line-height: 1.8;
-  color: #8b9d7e;
 }
 .search-results {
   display: flex;

@@ -30,6 +30,15 @@ export function createProfileController(c: Collections, config: Config) {
     res.json(userDto(user!));
   };
 
+  const completeOnboarding: RequestHandler = async (req, res) => {
+    const user = await c.users.findOneAndUpdate(
+      { _id: req.user!._id },
+      [{ $set: { onboardedAt: { $ifNull: ['$onboardedAt', '$$NOW'] } } }],
+      { returnDocument: 'after' },
+    );
+    res.json(userDto(user!));
+  };
+
   const updateAvatar: RequestHandler = async (req, res) => {
     const { image } = z.object({ image: z.string().max(750000) }).parse(req.body);
     const match = image.match(/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/);
@@ -90,5 +99,12 @@ export function createProfileController(c: Collections, config: Config) {
     res.json({ message: 'Đã đổi mật khẩu. Vui lòng đăng nhập lại.' });
   };
 
-  return { getProfile, updateProfile, updateAvatar, deleteAvatar, changePassword };
+  return {
+    getProfile,
+    updateProfile,
+    completeOnboarding,
+    updateAvatar,
+    deleteAvatar,
+    changePassword,
+  };
 }

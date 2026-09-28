@@ -23,6 +23,8 @@ export interface User {
   emailVerifiedAt?: Date | null;
   verifyHash?: string;
   verifyExpiresAt?: Date;
+  /** Set once the user finishes or skips the welcome tour. */
+  onboardedAt?: Date | null;
 }
 export function userDto(user: User) {
   return {
@@ -38,6 +40,7 @@ export function userDto(user: User) {
     createdAt: user.createdAt,
     lastLoginAt: user.lastLoginAt,
     hasPassword: Boolean(user.passwordHash),
+    onboarded: user.onboardedAt instanceof Date,
   };
 }
 export function emailIsVerified(user: { emailVerifiedAt?: Date | null }) {

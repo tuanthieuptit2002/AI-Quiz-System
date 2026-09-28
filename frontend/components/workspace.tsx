@@ -16,7 +16,7 @@ import {
   ChevronRight,
   Menu,
   X,
-  LifeBuoy,
+  BookOpenText,
   Sparkles,
   ShieldCheck,
   CheckCircle2,
@@ -29,7 +29,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from './auth-provider';
 import { Avatar, Logo, Loading, Modal, ErrorBox } from './ui';
-import { roleLabel, type Role } from '@/lib/types';
+import { api } from '@/lib/api';
+import { roleLabel, type User } from '@/lib/types';
 import { Overview } from './workspace-overview';
 import { UserManagement } from './workspace-users';
 import { ClassManagement, StudentManagement } from './workspace-classes';
@@ -44,6 +45,8 @@ import { AIStudio } from './workspace-ai';
 import { LearningAnalysisPage } from './workspace-analysis';
 import { PracticeStudio } from './practice/practice-studio';
 import { NotificationBell } from './notification-bell';
+import { DocsPage } from './docs/docs-page';
+import { OnboardingWizard } from './docs/onboarding-wizard';
 
 export type View =
   | 'dashboard'
@@ -55,6 +58,7 @@ export type View =
   | 'learning-analysis'
   | 'practice'
   | 'profile'
+  | 'docs'
   | 'questions'
   | 'question-analytics'
   | 'exams'
@@ -96,14 +100,30 @@ const navigation = [
     icon: Settings2,
     roles: ['ADMIN', 'TEACHER', 'STUDENT'],
   },
+  {
+    view: 'docs',
+    label: 'Hướng dẫn',
+    icon: BookOpenText,
+    roles: ['ADMIN', 'TEACHER', 'STUDENT'],
+  },
 ];
-export function Workspace({ view, classId }: { view: View; classId?: string }) {
-  const { user, loading, logout, connectionError, reconnect } = useAuth();
+const accountViews = ['profile', 'docs'];
+export function Workspace({
+  view,
+  classId,
+  docSlug,
+}: {
+  view: View;
+  classId?: string;
+  docSlug?: string;
+}) {
+  const { user, loading, logout, connectionError, reconnect, updateUser } = useAuth();
   const router = useRouter();
   const [sidebar, setSidebar] = useState(false);
   const [search, setSearch] = useState(false);
   const [query, setQuery] = useState('');
-  const [help, setHelp] = useState(false);
+  const [tour, setTour] = useState(false);
+  const [tourDone, setTourDone] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [notice, setNotice] = useState<{ message: string; error: boolean } | null>(null);
   const notify = useCallback<Notify>((message, error = false) => setNotice({ message, error }), []);
@@ -125,6 +145,15 @@ export function Workspace({ view, classId }: { view: View; classId?: string }) {
   const nav = navigation.filter((item) => item.roles.includes(user.role));
   const current = navigation.find((item) => item.view === view)!;
   const allowed = current.roles.includes(user.role);
+  const showTour = tour || (!user.onboarded && !tourDone);
+  const closeTour = () => {
+    setTour(false);
+    setTourDone(true);
+    if (!user.onboarded)
+      api<User>('/me/onboarding', { method: 'POST' })
+        .then(updateUser)
+        .catch((error: Error) => notify(error.message, true));
+  };
   const signOut = async () => {
     setLoggingOut(true);
     try {
@@ -169,7 +198,7 @@ export function Workspace({ view, classId }: { view: View; classId?: string }) {
         <span className="nav-caption">WORKSPACE</span>
         <nav className="sidebar-nav">
           {nav
-            .filter((item) => item.view !== 'profile')
+            .filter((item) => !accountViews.includes(item.view))
             .map((item) => (
               <Link
                 key={item.view}
@@ -199,10 +228,14 @@ export function Workspace({ view, classId }: { view: View; classId?: string }) {
             <Settings2 size={19} />
             <span>Hồ sơ cá nhân</span>
           </Link>
-          <button className="nav-item" onClick={() => setHelp(true)}>
-            <LifeBuoy size={19} />
-            <span>Trợ giúp</span>
-          </button>
+          <Link
+            href="/docs"
+            className={`nav-item ${view === 'docs' ? 'active' : ''}`}
+            onClick={() => setSidebar(false)}
+          >
+            <BookOpenText size={19} />
+            <span>Hướng dẫn</span>
+          </Link>
           <button className="nav-item sidebar-logout" onClick={signOut} disabled={loggingOut}>
             <LogOut size={19} />
             <span>{loggingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}</span>
@@ -280,6 +313,9 @@ export function Workspace({ view, classId }: { view: View; classId?: string }) {
                 </Suspense>
               )}
               {view === 'profile' && <ProfilePage notify={notify} />}
+              {view === 'docs' && (
+                <DocsPage role={user.role} slug={docSlug} openTour={() => setTour(true)} />
+              )}
               {view === 'questions' && <QuestionBank notify={notify} />}
               {view === 'question-analytics' && <QuestionAnalytics />}
               {view === 'ai-exams' && <AIExamStudio notify={notify} />}
@@ -340,48 +376,7 @@ export function Workspace({ view, classId }: { view: View; classId?: string }) {
           </div>
         </Modal>
       )}
-      {help && (
-        <Modal
-          title="Một chút hướng dẫn"
-          description="Mọi thứ bạn cần để bắt đầu với QuizSpace."
-          close={() => setHelp(false)}
-        >
-          <Help role={user.role} />
-        </Modal>
-      )}
-    </div>
-  );
-}
-function Help({ role }: { role: Role }) {
-  const steps =
-    role === 'ADMIN'
-      ? [
-          'Tạo tài khoản và phân vai trò tại trang Người dùng.',
-          'Khóa tài khoản sẽ kết thúc các phiên truy cập của người dùng đó.',
-          'Bạn không thể tự khóa hoặc đổi vai trò của chính mình.',
-        ]
-      : role === 'TEACHER'
-        ? [
-            'Phân tích câu hỏi so độ khó đã đặt với tỷ lệ đúng, độ phân biệt và phương án nhiễu.',
-            'Tạo lớp học mới và chọn môn học tại trang Lớp học.',
-            'Thêm học sinh bằng email đã đăng ký, hoặc chia sẻ mã lớp.',
-            'Bạn chỉ có thể quản lý các lớp do chính mình tạo.',
-          ]
-        : [
-            'Tham gia lớp bằng mã lớp do giáo viên cung cấp.',
-            'Lịch sử thi và tiến độ được cập nhật khi có kết quả bài thi.',
-            'Practice Weak Topics tạo quiz theo chủ đề còn yếu và chỉnh độ khó sau mỗi câu.',
-            'Đặt mục tiêu học mỗi tuần trong Hồ sơ cá nhân.',
-          ];
-  return (
-    <div className="help-steps">
-      {steps.map((step, index) => (
-        <div key={step}>
-          <span>{index + 1}</span>
-          <p>{step}</p>
-        </div>
-      ))}
-      <p className="muted">Cập nhật thông tin và đổi mật khẩu bất cứ lúc nào tại Hồ sơ cá nhân.</p>
+      {showTour && <OnboardingWizard role={user.role} name={user.name} close={closeTour} />}
     </div>
   );
 }

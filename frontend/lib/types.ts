@@ -12,6 +12,7 @@ export type User = {
   createdAt: string;
   lastLoginAt?: string;
   hasPassword: boolean;
+  onboarded: boolean;
 };
 export type AuthResult = { user: User; accessToken: string };
 export type Classroom = {
