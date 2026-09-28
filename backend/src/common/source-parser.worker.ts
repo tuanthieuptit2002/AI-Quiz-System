@@ -76,7 +76,27 @@ async function extract() {
     for (let number = 1; number <= pdf.numPages; number++) {
       const page = await pdf.getPage(number);
       const content = await page.getTextContent();
-      text += `\n${content.items.map((item) => ('str' in item ? item.str + (item.hasEOL ? '\n' : ' ') : '')).join('')}`;
+      // PDFs split words into runs at every font or glyph change (Vietnamese diacritics especially),
+      // so a space is only real when there is a visible gap between runs.
+      let last: { end: number; y: number; size: number } | null = null;
+      text += '\n';
+      for (const item of content.items) {
+        if (!('str' in item)) continue;
+        const [, , c, d, x, y] = item.transform;
+        const size = Math.hypot(c, d) || item.height || 10;
+        if (last) {
+          if (Math.abs(y - last.y) > last.size * 0.5) text += '\n';
+          else if (
+            x - last.end > last.size * 0.15 &&
+            !/\s/.test(text.at(-1) || '') &&
+            !/^\s/.test(item.str)
+          )
+            text += ' ';
+        }
+        text += item.str;
+        last = item.hasEOL ? null : { end: x + item.width, y, size };
+        if (item.hasEOL) text += '\n';
+      }
       page.cleanup();
       if (text.length > 100000)
         throw new Error('Tài liệu quá dài. Hãy tách thành các phần nhỏ hơn.');

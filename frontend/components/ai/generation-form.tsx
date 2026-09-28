@@ -384,7 +384,11 @@ export function GenerationForm({
             </div>
             <Field
               label="Yêu cầu bổ sung / Prompt"
-              hint="AI dùng yêu cầu này cùng chủ đề và nguồn bạn chọn."
+              hint={
+                mode === 'PROMPT'
+                  ? 'AI dùng yêu cầu này cùng chủ đề và nguồn bạn chọn.'
+                  : 'Không bắt buộc. Để trống, AI tự đọc tài liệu và tạo câu hỏi bao quát toàn bộ nội dung.'
+              }
             >
               <textarea
                 maxLength={2000}

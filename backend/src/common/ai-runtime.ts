@@ -42,6 +42,7 @@ export async function processNextAIJob(db: Db, generate: AIGenerator) {
   );
   if (!claimed) return false;
   let job: AIGeneration = claimed;
+  let failedBatches = 0;
   try {
     do {
       const owner = await c.users.findOne({
@@ -74,7 +75,23 @@ export async function processNextAIJob(db: Db, generate: AIGenerator) {
         feedback: job.feedback,
         model: job.model,
       };
-      const generated = await generate(request);
+      let generated: Awaited<ReturnType<AIGenerator>>;
+      try {
+        generated = await generate(request);
+      } catch (error) {
+        // Model output slips are usually one-off; give the batch one more chance before failing the job.
+        if (!(error as { retryableOutput?: boolean }).retryableOutput || ++failedBatches > 1)
+          throw error;
+        const renewed = await c.aiGenerations.findOneAndUpdate(
+          { _id: job._id, status: 'GENERATING', leaseId },
+          { $set: { leaseUntil: new Date(Date.now() + 180000), updatedAt: new Date() } },
+          { returnDocument: 'after' },
+        );
+        if (!renewed) return true;
+        job = renewed;
+        continue;
+      }
+      failedBatches = 0;
       // Always validate at the storage boundary, including alternative/test provider implementations.
       const result = validateAIOutput(
         {

@@ -14,7 +14,7 @@ import {
   type AIGenerator,
   type AIRequest,
 } from '../src/common/ai-provider.js';
-import { validateAIOutput } from '../src/common/ai.validation.js';
+import { isGrounded, validateAIOutput } from '../src/common/ai.validation.js';
 import { processNextAIJob, expireAILeases } from '../src/common/ai-runtime.js';
 import {
   extractDocument,
@@ -185,7 +185,8 @@ test('DeepSeek adapter validates every question and never exposes provider secre
     async () => {
       const sample = await fakeGenerator(base);
       const output = asOutput(sample);
-      assert.throws(() => validateAIOutput(output, settings, source, 2, []));
+      assert.throws(() => validateAIOutput({ questions: [] }, settings, source, 1, []));
+      assert.equal(validateAIOutput(output, settings, source, 2, []).length, 1);
       assert.throws(
         () => validateAIOutput(output, settings, source, 1, [sample[0].content.question]),
         /trùng/,
@@ -205,6 +206,40 @@ test('DeepSeek adapter validates every question and never exposes provider secre
       );
       output.questions[0].evidence = 'Invented quote';
       assert.throws(() => validateAIOutput(output, settings, document, 1, []), /trích/);
+    },
+  );
+  await t.test(
+    'source quotes tolerate PDF formatting and ellipses but not invented text; bad items are dropped',
+    async () => {
+      const pdfText =
+        'Thuật toán là một dãy hữu hạn các thao tác, được sắp xếp theo một trình tự xác định,\n' +
+        'sao cho khi thực hiện sẽ giải quyết được bài toán. Các thao tác phải có ý nghĩa rõ ràng,\n' +
+        'không được gây nhầm lẫn. Chương trình = Cấu trúc dữ liệu + Giải thuật (Niklaus Wirth). Cấu trúc dữ liệu tốt giúp giải thuật hiệu quả hơn.';
+      assert.ok(
+        isGrounded(pdfText, '“Các thao tác phải có ý nghĩa rõ ràng, không được gây nhầm lẫn”'),
+      );
+      assert.ok(
+        isGrounded(
+          pdfText,
+          'Thuật toán là một dãy hữu hạn các thao tác … giải quyết được bài toán',
+        ),
+      );
+      assert.ok(isGrounded(pdfText, 'chương trình – cấu trúc dữ liệu + giải thuật'));
+      assert.ok(!isGrounded(pdfText, 'Thuật toán luôn chạy trong thời gian hằng số'));
+      assert.ok(!isGrounded(pdfText, 'thuật toán'));
+      assert.ok(
+        isGrounded(
+          'CH ƯƠ NG 1. T Ổ NG QUAN V Ề C Ấ U TRÚC D Ữ LI Ệ U VÀ GI Ả I THU Ậ T',
+          'Chương 1. Tổng quan về cấu trúc dữ liệu và giải thuật',
+        ),
+      );
+      const document = { kind: 'PDF' as const, name: 'chuong1.pdf', text: pdfText };
+      const pair = asOutput(await fakeGenerator({ ...base, count: 2 }));
+      pair.questions[0].evidence = 'Các thao tác phải có ý nghĩa rõ ràng, không được gây nhầm lẫn.';
+      pair.questions[1].evidence = 'Một câu không hề có trong tài liệu gốc của giáo viên';
+      const kept = validateAIOutput(pair, settings, document, 2, []);
+      assert.equal(kept.length, 1);
+      assert.equal(kept[0].content.question, pair.questions[0].question);
     },
   );
   await t.test(
@@ -542,6 +577,50 @@ test('AI workflow persists drafts, enforces ownership and approves atomically in
       assert.equal(new Set(job.items.map((item: { id: string }) => item.id)).size, 30);
       assert.ok(job.items.every((item: { evidence: string }) => lecture.includes(item.evidence)));
       assert.equal(await c.questions.countDocuments({}), 3);
+    },
+  );
+  await t.test(
+    'document jobs keep valid questions from partial batches and retry one failed batch',
+    async () => {
+      const document = { kind: 'PDF', name: 'chuong1.pdf', text: lecture };
+      const created = (
+        await post('/ai/generations', token)
+          .send({ ...fresh(7), source: document })
+          .expect(202)
+      ).body;
+      let calls = 0;
+      await processNextAIJob(db, async (request) => {
+        if (++calls === 1)
+          throw Object.assign(new Error('AI chưa trích đúng nội dung nguồn.'), {
+            status: 502,
+            retryableOutput: true,
+          });
+        const output = await fakeGenerator(request);
+        if (calls === 2)
+          output[4].evidence = 'Một câu không hề có trong tài liệu gốc của giáo viên';
+        return output;
+      });
+      let job = await read(created.id);
+      assert.equal(calls, 3);
+      assert.equal(job.status, 'REVIEW');
+      assert.equal(job.items.length, 7);
+      const failing = (
+        await post('/ai/generations', token)
+          .send({ ...fresh(1), source: document })
+          .expect(202)
+      ).body;
+      calls = 0;
+      await processNextAIJob(db, async () => {
+        calls++;
+        throw Object.assign(new Error('AI chưa trích đúng nội dung nguồn.'), {
+          status: 502,
+          retryableOutput: true,
+        });
+      });
+      job = await read(failing.id);
+      assert.equal(calls, 2);
+      assert.equal(job.status, 'FAILED');
+      assert.match(job.error, /trích/);
     },
   );
   await t.test(

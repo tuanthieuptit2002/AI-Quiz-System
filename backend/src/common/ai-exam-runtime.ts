@@ -225,7 +225,7 @@ export async function processNextAIExamJob(db: Db, planner: ExamPlanner, generat
             ? job.items.map((i) => (i.id === replacing.id ? added[0] : i))
             : [...job.items, ...added],
         });
-        remaining -= count;
+        remaining -= added.length;
       }
     }
     await persist({ status: 'REVIEW', replaceId: null, feedback: '', error: '' });

@@ -354,7 +354,7 @@ test('AI Exam integration: planning, scoped bank reuse, generation, review and t
       let calls = 0;
       await processNextAIExamJob(db, planner, async (i) => {
         const result = await generator(i);
-        if (++calls === 2) result[0].content.answers = ['missing-option'];
+        if (++calls === 2) for (const item of result) item.content.answers = ['missing-option'];
         return result;
       });
       let job = await read(initial.id);
