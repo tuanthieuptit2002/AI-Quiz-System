@@ -26,9 +26,21 @@ export type DocCategory = (typeof docCategories)[number];
 
 const everyone: Role[] = ['ADMIN', 'TEACHER', 'STUDENT'];
 const authors: Role[] = ['ADMIN', 'TEACHER'];
-/** Screenshots live in public/docs and were taken at 1280×800 unless a size is given. */
+const cloudinaryBase = 'https://res.cloudinary.com/dld6zt8jn/image/upload';
+
+/** `src` is a Cloudinary public id; `c_limit` keeps Cloudinary from upscaling past the original. */
+export function cloudinaryUrl(src: string, width?: number, quality?: number) {
+  const transforms = [
+    'f_auto',
+    `q_${quality ?? 'auto'}`,
+    ...(width ? ['c_limit', `w_${width}`] : []),
+  ];
+  return `${cloudinaryBase}/${transforms.join(',')}/${src}`;
+}
+
+/** Screenshots live in Cloudinary under quizspace/docs and were taken at 1280×800 unless a size is given. */
 const shot = (name: string, alt: string, width = 1280, height = 800): DocImage => ({
-  src: `/docs/${name}.jpg`,
+  src: `quizspace/docs/${name}`,
   alt,
   width,
   height,

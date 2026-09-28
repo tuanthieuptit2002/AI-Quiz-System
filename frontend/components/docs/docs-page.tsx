@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import Image from 'next/image';
+import Image, { type ImageLoader } from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -17,8 +17,18 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { Empty, SectionTitle } from '../ui';
-import { docCategories, docsFor, docText, type DocArticle, type DocCategory } from '@/lib/docs';
+import {
+  cloudinaryUrl,
+  docCategories,
+  docsFor,
+  docText,
+  type DocArticle,
+  type DocCategory,
+} from '@/lib/docs';
 import type { Role } from '@/lib/types';
+
+const cloudinaryLoader: ImageLoader = ({ src, width, quality }) =>
+  cloudinaryUrl(src, width, quality);
 
 const categoryIcons: Record<DocCategory, typeof Rocket> = {
   'Bắt đầu': Rocket,
@@ -195,8 +205,14 @@ function DocView({ list, index }: { list: DocArticle[]; index: number }) {
             )}
             {section.images?.map((image) => (
               <figure key={image.src} className="docs-shot">
-                <a href={image.src} target="_blank" rel="noopener" title="Mở ảnh kích thước đầy đủ">
+                <a
+                  href={cloudinaryUrl(image.src)}
+                  target="_blank"
+                  rel="noopener"
+                  title="Mở ảnh kích thước đầy đủ"
+                >
                   <Image
+                    loader={cloudinaryLoader}
                     src={image.src}
                     alt={image.alt}
                     width={image.width}
