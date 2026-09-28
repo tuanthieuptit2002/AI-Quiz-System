@@ -22,8 +22,13 @@ import { useAuth } from './auth-provider';
 import { Logo, ErrorBox, Spinner, Field } from './ui';
 import { api, jsonBody } from '@/lib/api';
 import type { AuthResult } from '@/lib/types';
+import { pendingJoinKey } from '@/lib/classes';
 
 type Mode = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
+function homePath() {
+  const code = window.sessionStorage.getItem(pendingJoinKey) || '';
+  return /^[a-f\d]{10}$/i.test(code) ? `/join/${code}` : '/dashboard';
+}
 declare global {
   interface Window {
     google?: {
@@ -47,6 +52,7 @@ export function AuthScreen({ mode }: { mode: Mode }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [done, setDone] = useState(false);
   const [resent, setResent] = useState(false);
   const [verifying, setVerifying] = useState(
@@ -58,7 +64,7 @@ export function AuthScreen({ mode }: { mode: Mode }) {
   const googleRef = useRef<HTMLDivElement>(null);
   const verifyStarted = useRef(false);
   useEffect(() => {
-    if (!loading && user && (mode === 'login' || mode === 'register')) router.replace('/dashboard');
+    if (!loading && user && (mode === 'login' || mode === 'register')) router.replace(homePath());
   }, [user, loading, mode, router]);
   useEffect(() => {
     api<{ googleClientId: string }>('/auth/config')
@@ -78,7 +84,7 @@ export function AuthScreen({ mode }: { mode: Mode }) {
           accept(result);
           setVerified(true);
           setVerifying(false);
-          window.setTimeout(() => router.replace('/dashboard'), 4000);
+          window.setTimeout(() => router.replace(homePath()), 4000);
         })
         .catch((reason) => {
           setError((reason as Error).message);
@@ -101,7 +107,7 @@ export function AuthScreen({ mode }: { mode: Mode }) {
               body: jsonBody({ credential: response.credential }),
             }),
           );
-          router.replace('/dashboard');
+          router.replace(homePath());
         } catch (error) {
           setError((error as Error).message);
         } finally {
@@ -132,7 +138,7 @@ export function AuthScreen({ mode }: { mode: Mode }) {
             body: jsonBody({ email, password }),
           }),
         );
-        router.replace('/dashboard');
+        router.replace(homePath());
       } else if (mode === 'register') {
         const confirmPassword = String(form.get('confirmPassword') || '');
         if (password !== confirmPassword) throw new Error('Hai mật khẩu chưa khớp.');
@@ -454,17 +460,28 @@ export function AuthScreen({ mode }: { mode: Mode }) {
                 )}
                 {(mode === 'reset' || mode === 'register') && (
                   <Field label={mode === 'register' ? 'Nhập lại mật khẩu' : 'Xác nhận mật khẩu'}>
-                    <input
-                      name="confirmPassword"
-                      type="password"
-                      autoComplete="new-password"
-                      minLength={10}
-                      maxLength={72}
-                      placeholder={
-                        mode === 'register' ? 'Nhập lại mật khẩu' : 'Nhập lại mật khẩu mới'
-                      }
-                      required
-                    />
+                    <div className="input-icon">
+                      <LockKeyhole size={18} />
+                      <input
+                        name="confirmPassword"
+                        type={showConfirm ? 'text' : 'password'}
+                        autoComplete="new-password"
+                        minLength={10}
+                        maxLength={72}
+                        placeholder={
+                          mode === 'register' ? 'Nhập lại mật khẩu' : 'Nhập lại mật khẩu mới'
+                        }
+                        required
+                      />
+                      <button
+                        className="password-toggle"
+                        type="button"
+                        onClick={() => setShowConfirm((value) => !value)}
+                        aria-label={showConfirm ? 'Ẩn mật khẩu nhập lại' : 'Hiện mật khẩu nhập lại'}
+                      >
+                        {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </Field>
                 )}
                 {mode === 'login' && (

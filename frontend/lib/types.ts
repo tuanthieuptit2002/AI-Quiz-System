@@ -16,6 +16,8 @@ export type User = {
 export type AuthResult = { user: User; accessToken: string };
 export type Classroom = {
   id: string;
+  courseId: string | null;
+  courseTitle?: string;
   name: string;
   subject: string;
   description: string;

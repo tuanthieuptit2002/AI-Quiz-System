@@ -8,6 +8,7 @@
 @import './explanations.css';
 @import './learning-analysis.css';
 @import './practice.css';
+@import './classes.css';
 
 :root {
   --background: #f7f9fa;

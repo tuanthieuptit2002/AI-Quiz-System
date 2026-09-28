@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Archive,
   ArrowLeft,
@@ -540,6 +540,13 @@ export function StudentExams() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [now, setNow] = useState(Date.now);
+  const focus = useSearchParams().get('exam') || '';
+  useEffect(() => {
+    if (focus && list.data)
+      document
+        .getElementById(`exam-${focus}`)
+        ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [focus, list.data]);
   useEffect(() => {
     if (!list.data?.serverTime) return;
     const server = Date.parse(list.data.serverTime);
@@ -608,8 +615,13 @@ export function StudentExams() {
             const future = exam.settings.startsAt && Date.parse(exam.settings.startsAt) > now;
             const ended = exam.settings.endsAt && Date.parse(exam.settings.endsAt) <= now;
             const exhausted = exam.runs.length >= exam.settings.maxAttempts;
+            const overdue = !!exam.dueAt && Date.parse(exam.dueAt) <= now;
             return (
-              <article className="panel exam-card" key={exam.id}>
+              <article
+                className={`panel exam-card ${focus === exam.id ? 'focused' : ''}`}
+                id={`exam-${exam.id}`}
+                key={exam.id}
+              >
                 <div className="exam-card-top">
                   <span className="exam-card-icon">
                     <ClipboardList size={25} />
@@ -621,7 +633,9 @@ export function StudentExams() {
                         ? 'Sắp diễn ra'
                         : ended
                           ? 'Đã hết giờ'
-                          : 'Đang mở'}
+                          : overdue
+                            ? 'Quá hạn nộp'
+                            : 'Đang mở'}
                   </span>
                   {exam.hasPassword && <LockKeyhole size={17} />}
                 </div>
@@ -642,6 +656,11 @@ export function StudentExams() {
                 <div className="exam-card-schedule">
                   <span>Mở: {displayDate(exam.settings.startsAt)}</span>
                   <span>Đóng: {displayDate(exam.settings.endsAt)}</span>
+                  {exam.dueAt && (
+                    <span className={`exam-card-due ${overdue ? 'late' : ''}`}>
+                      Hạn nộp lớp: {displayDate(exam.dueAt)}
+                    </span>
+                  )}
                 </div>
                 <div className="exam-past-runs">
                   {exam.runs.map((r) => (
@@ -675,7 +694,12 @@ export function StudentExams() {
                     <button
                       className="btn btn-primary small"
                       disabled={
-                        busy || !!future || !!ended || exhausted || exam.status !== 'PUBLISHED'
+                        busy ||
+                        !!future ||
+                        !!ended ||
+                        overdue ||
+                        exhausted ||
+                        exam.status !== 'PUBLISHED'
                       }
                       onClick={() => {
                         setStarting(exam);

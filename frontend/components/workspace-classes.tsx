@@ -1,5 +1,6 @@
 'use client';
 import { useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import {
   BookOpen,
   Plus,
@@ -9,15 +10,16 @@ import {
   Copy,
   Trash2,
   Pencil,
-  UserPlus,
   GraduationCap,
   KeyRound,
-  X,
+  Layers,
 } from 'lucide-react';
 import { api, jsonBody } from '@/lib/api';
 import { useQuery } from '@/lib/use-query';
 import type { Classroom, Role, User } from '@/lib/types';
+import type { Course } from '@/lib/classes';
 import { Avatar, Empty, ErrorBox, Field, Loading, Modal, SectionTitle, Spinner } from './ui';
+import { CourseManager } from './classes/course-manager';
 import type { Notify } from './workspace';
 
 export function ClassManagement({ role, notify }: { role: Role; notify: Notify }) {
@@ -25,15 +27,22 @@ export function ClassManagement({ role, notify }: { role: Role; notify: Notify }
   const { data, error, loading, reload } = useQuery<{ classes: Classroom[] }>(
     teacher ? '/teacher/classes' : '/student/classes',
   );
+  const courses = useQuery<{ courses: Course[] }>(teacher ? '/teacher/courses' : null);
   const [search, setSearch] = useState('');
+  const [course, setCourse] = useState<string>('');
   const [form, setForm] = useState<Classroom | 'new' | null>(null);
-  const [selected, setSelected] = useState<Classroom | null>(null);
   const [deleting, setDeleting] = useState<Classroom | null>(null);
   const [join, setJoin] = useState(false);
+  const [managing, setManaging] = useState(false);
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState('');
-  const classes = (data?.classes || []).filter((cl) =>
-    `${cl.name} ${cl.subject}`.toLowerCase().includes(search.toLowerCase()),
+  const courseList = courses.data?.courses || [];
+  const courseTitle = (cl: Classroom) =>
+    cl.courseTitle || courseList.find((item) => item.id === cl.courseId)?.title || '';
+  const classes = (data?.classes || []).filter(
+    (cl) =>
+      `${cl.name} ${cl.subject} ${courseTitle(cl)}`.toLowerCase().includes(search.toLowerCase()) &&
+      (!course || (course === 'none' ? !cl.courseId : cl.courseId === course)),
   );
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,10 +65,12 @@ export function ClassManagement({ role, notify }: { role: Role; notify: Notify }
             subject: values.get('subject'),
             description: values.get('description'),
             color: values.get('color'),
+            courseId: values.get('courseId') || null,
           }),
         });
         notify(form === 'new' ? 'Lớp học mới đã sẵn sàng.' : 'Đã cập nhật lớp học.');
         setForm(null);
+        courses.reload();
       }
       reload();
     } catch (error) {
@@ -75,6 +86,7 @@ export function ClassManagement({ role, notify }: { role: Role; notify: Notify }
       await api(`/teacher/classes/${deleting.id}`, { method: 'DELETE' });
       setDeleting(null);
       reload();
+      courses.reload();
       notify('Đã xóa lớp học.');
     } catch (error) {
       setFormError((error as Error).message);
@@ -93,17 +105,24 @@ export function ClassManagement({ role, notify }: { role: Role; notify: Notify }
             : 'Nơi bạn kết nối cùng thầy cô và những người bạn đồng hành.'
         }
         action={
-          <button
-            className="btn btn-primary"
-            onClick={() => {
-              setFormError('');
-              if (teacher) setForm('new');
-              else setJoin(true);
-            }}
-          >
-            <Plus size={18} />
-            {teacher ? 'Tạo lớp học' : 'Tham gia lớp'}
-          </button>
+          <div className="class-heading-actions">
+            {teacher && (
+              <button className="btn btn-secondary" onClick={() => setManaging(true)}>
+                <Layers size={17} /> Khóa học
+              </button>
+            )}
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setFormError('');
+                if (teacher) setForm('new');
+                else setJoin(true);
+              }}
+            >
+              <Plus size={18} />
+              {teacher ? 'Tạo lớp học' : 'Tham gia lớp'}
+            </button>
+          </div>
         }
       />
       <div className="class-toolbar">
@@ -115,12 +134,31 @@ export function ClassManagement({ role, notify }: { role: Role; notify: Notify }
           <Search size={17} />
           <input
             aria-label="Tìm lớp học"
-            placeholder="Tìm lớp hoặc môn học…"
+            placeholder="Tìm lớp, môn hoặc khóa học…"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
       </div>
+      {teacher && courseList.length > 0 && (
+        <div className="exam-status-tabs class-course-tabs" role="group" aria-label="Lọc theo khóa">
+          <button className={!course ? 'active' : ''} onClick={() => setCourse('')}>
+            Tất cả
+          </button>
+          {courseList.map((item) => (
+            <button
+              key={item.id}
+              className={course === item.id ? 'active' : ''}
+              onClick={() => setCourse(item.id)}
+            >
+              {item.title} <span>{item.classCount}</span>
+            </button>
+          ))}
+          <button className={course === 'none' ? 'active' : ''} onClick={() => setCourse('none')}>
+            Chưa xếp khóa
+          </button>
+        </div>
+      )}
       {loading ? (
         <Loading />
       ) : error ? (
@@ -161,6 +199,11 @@ export function ClassManagement({ role, notify }: { role: Role; notify: Notify }
                 )}
               </div>
               <div className="class-info">
+                {courseTitle(cl) && (
+                  <span className="class-course">
+                    <Layers size={12} /> {courseTitle(cl)}
+                  </span>
+                )}
                 <h2>{cl.name}</h2>
                 <p>
                   {cl.description ||
@@ -194,16 +237,15 @@ export function ClassManagement({ role, notify }: { role: Role; notify: Notify }
                     </span>
                   )}
                 </div>
-                {teacher ? (
-                  <button className="class-open" onClick={() => setSelected(cl)}>
-                    Quản lý lớp học <ArrowUpRight size={17} />
-                  </button>
-                ) : (
+                {!teacher && (
                   <div className="class-teacher">
                     <GraduationCap size={17} />
                     <span>{cl.teacherName}</span>
                   </div>
                 )}
+                <Link className="class-open" href={`/classes/${cl.id}`}>
+                  {teacher ? 'Quản lý lớp học' : 'Vào lớp học'} <ArrowUpRight size={17} />
+                </Link>
               </div>
             </article>
           ))}
@@ -213,21 +255,22 @@ export function ClassManagement({ role, notify }: { role: Role; notify: Notify }
           <Empty
             icon={<BookOpen size={29} />}
             title={
-              search
+              search || course
                 ? 'Chưa tìm thấy lớp học'
                 : teacher
                   ? 'Bắt đầu từ một lớp học'
                   : 'Lớp học mới đang chờ bạn'
             }
             description={
-              search
-                ? 'Thử tìm kiếm bằng từ khóa khác.'
+              search || course
+                ? 'Thử từ khóa khác hoặc chọn khóa học khác.'
                 : teacher
                   ? 'Tạo lớp đầu tiên, mời học sinh và truyền cảm hứng theo cách của bạn.'
-                  : 'Nhập mã lớp do giáo viên chia sẻ để bắt đầu học cùng mọi người.'
+                  : 'Nhập mã lớp hoặc mở link mời do giáo viên chia sẻ để bắt đầu học cùng mọi người.'
             }
             action={
-              !search && (
+              !search &&
+              !course && (
                 <button
                   className="btn btn-primary"
                   onClick={() => {
@@ -297,6 +340,25 @@ export function ClassManagement({ role, notify }: { role: Role; notify: Notify }
                     required
                   />
                 </Field>
+                <Field label="Khóa học">
+                  <select
+                    name="courseId"
+                    defaultValue={
+                      form && form !== 'new'
+                        ? form.courseId || ''
+                        : course && course !== 'none'
+                          ? course
+                          : ''
+                    }
+                  >
+                    <option value="">Không thuộc khóa nào</option>
+                    {courseList.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.title}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
                 <Field label="Mô tả lớp">
                   <textarea
                     name="description"
@@ -342,11 +404,14 @@ export function ClassManagement({ role, notify }: { role: Role; notify: Notify }
           </form>
         </Modal>
       )}
-      {selected && (
-        <ClassStudents
-          classroom={selected}
-          close={() => setSelected(null)}
-          changed={reload}
+      {managing && (
+        <CourseManager
+          courses={courseList}
+          close={() => setManaging(false)}
+          changed={() => {
+            courses.reload();
+            reload();
+          }}
           notify={notify}
         />
       )}
@@ -354,8 +419,8 @@ export function ClassManagement({ role, notify }: { role: Role; notify: Notify }
         <Modal title="Xóa lớp học này?" description={deleting.name} close={() => setDeleting(null)}>
           <ErrorBox message={formError} />
           <p className="modal-description">
-            Lớp học và danh sách thành viên trong lớp sẽ được gỡ. Tài khoản và kết quả thi của học
-            sinh vẫn được giữ nguyên.
+            Lớp học, bài học và danh sách bài đã giao trong lớp sẽ được gỡ. Tài khoản và kết quả thi
+            của học sinh vẫn được giữ nguyên.
           </p>
           <div className="modal-actions">
             <button className="btn btn-secondary" onClick={() => setDeleting(null)}>
@@ -368,104 +433,6 @@ export function ClassManagement({ role, notify }: { role: Role; notify: Notify }
         </Modal>
       )}
     </>
-  );
-}
-function ClassStudents({
-  classroom,
-  close,
-  changed,
-  notify,
-}: {
-  classroom: Classroom;
-  close: () => void;
-  changed: () => void;
-  notify: Notify;
-}) {
-  const { data, error, loading, reload } = useQuery<{ students: User[] }>(
-    `/teacher/classes/${classroom.id}/students`,
-  );
-  const [busy, setBusy] = useState(false);
-  const [removing, setRemoving] = useState<string | null>(null);
-  const [actionError, setActionError] = useState('');
-  async function add(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    setBusy(true);
-    setActionError('');
-    try {
-      await api(`/teacher/classes/${classroom.id}/students`, {
-        method: 'POST',
-        body: jsonBody({ email: new FormData(form).get('email') }),
-      });
-      form.reset();
-      reload();
-      changed();
-      notify('Đã thêm học sinh vào lớp.');
-    } catch (error) {
-      setActionError((error as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function remove(id: string) {
-    setRemoving(id);
-    setActionError('');
-    try {
-      await api(`/teacher/classes/${classroom.id}/students/${id}`, { method: 'DELETE' });
-      reload();
-      changed();
-      notify('Đã gỡ học sinh khỏi lớp.');
-    } catch (error) {
-      setActionError((error as Error).message);
-    } finally {
-      setRemoving(null);
-    }
-  }
-  return (
-    <Modal
-      title={classroom.name}
-      description={`Mã lớp: ${classroom.code} · ${classroom.subject}`}
-      close={close}
-    >
-      <form onSubmit={add} className="add-student-form">
-        <Field label="Thêm học sinh bằng email">
-          <input name="email" type="email" required placeholder="hocsinh@example.com" />
-        </Field>
-        <button className="btn btn-primary" disabled={busy} aria-label="Thêm học sinh">
-          {busy ? <Spinner /> : <UserPlus size={18} />}
-        </button>
-      </form>
-      <ErrorBox message={actionError} />
-      <ErrorBox message={error} retry={reload} />
-      {loading ? (
-        <Loading />
-      ) : data?.students.length ? (
-        <div className="member-list">
-          {data.students.map((student) => (
-            <div key={student.id}>
-              <Avatar user={student} />
-              <div>
-                <b>{student.name}</b>
-                <small>{student.email}</small>
-              </div>
-              <button
-                className="icon-btn danger-text"
-                aria-label={`Gỡ ${student.name} khỏi lớp`}
-                disabled={removing === student.id}
-                onClick={() => remove(student.id)}
-              >
-                {removing === student.id ? <Spinner /> : <X size={18} />}
-              </button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <Empty
-          title="Chưa có thành viên"
-          description="Thêm bằng email hoặc chia sẻ mã lớp để học sinh tự tham gia."
-        />
-      )}
-    </Modal>
   );
 }
 export function StudentManagement() {

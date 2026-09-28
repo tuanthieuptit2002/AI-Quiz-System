@@ -14,6 +14,7 @@ import {
 } from '../common/exam-runtime.js';
 import { clientActivityTypes } from '../models/exam-activity.model.js';
 import { clientContext, recordExamActivity } from '../common/exam-activity.js';
+import { assignedDue } from '../common/classroom.js';
 import type { Exam, ExamRun } from '../models/exam.model.js';
 
 export function createExamTakingController(db: Db) {
@@ -37,6 +38,18 @@ export function createExamTakingController(db: Db) {
     const classes = await c.classes
       .find({ studentIds: req.user!._id }, { projection: { _id: 1 } })
       .toArray();
+    const assigned = await c.assignments
+      .find(
+        { classId: { $in: classes.map((cl) => cl._id) } },
+        { projection: { examId: 1, dueAt: 1 } },
+      )
+      .toArray();
+    const dueOf = (examId: ObjectId) => {
+      const times = assigned
+        .filter((row) => row.examId.equals(examId))
+        .map((row) => row.dueAt.getTime());
+      return times.length ? new Date(Math.max(...times)) : null;
+    };
     const runs = await c.examRuns
       .find({ studentId: req.user!._id }, { projection: { questions: 0, responses: 0 } })
       .sort({ startedAt: -1 })
@@ -50,6 +63,7 @@ export function createExamTakingController(db: Db) {
               { 'settings.access': 'ALL' },
               { 'settings.studentIds': req.user!._id },
               { 'settings.classIds': { $in: classes.map((cl) => cl._id) } },
+              { _id: { $in: assigned.map((row) => row.examId) } },
             ],
           },
           { _id: { $in: runs.map((r) => r.examId) } },
@@ -67,6 +81,7 @@ export function createExamTakingController(db: Db) {
         questionCount: e.questions.length,
         totalPoints: e.questions.reduce((s, q) => s + q.points, 0),
         hasPassword: !!e.passwordHash,
+        dueAt: dueOf(e._id),
         settings: {
           durationMinutes: e.settings.durationMinutes,
           maxAttempts: e.settings.maxAttempts,
@@ -113,7 +128,10 @@ export function createExamTakingController(db: Db) {
       }
     }
     const exam = await c.exams.findOne({ _id: id, status: 'PUBLISHED' });
-    if (!exam || !(await canAccess(exam, req.user!._id)))
+    if (
+      !exam ||
+      !((await assignedDue(c, id, req.user!._id)) || (await canAccess(exam, req.user!._id)))
+    )
       httpError(404, 'Đề thi không khả dụng cho tài khoản này.');
     if (exam.passwordHash && !(await verifyPassword(password, exam.passwordHash)))
       httpError(403, 'Mã truy cập không chính xác.');
@@ -124,9 +142,11 @@ export function createExamTakingController(db: Db) {
         { $inc: { admissionRevision: 1 } },
         { session, returnDocument: 'after' },
       );
-      if (!latest || !(await canAccess(latest, req.user!._id, session)))
+      const due = await assignedDue(c, id, req.user!._id, session);
+      if (!latest || !(due || (await canAccess(latest, req.user!._id, session))))
         httpError(403, 'Đề thi hiện không khả dụng.');
       const now = new Date();
+      if (due && now >= due) httpError(403, 'Đã quá hạn nộp bài của lớp.');
       if (latest.settings.startsAt && now < latest.settings.startsAt)
         httpError(403, 'Chưa đến giờ bắt đầu thi.');
       if (latest.settings.endsAt && now >= latest.settings.endsAt)
@@ -146,6 +166,7 @@ export function createExamTakingController(db: Db) {
         Math.min(
           now.getTime() + latest.settings.durationMinutes * 60000,
           latest.settings.endsAt?.getTime() || Infinity,
+          due?.getTime() || Infinity,
         ),
       );
       const run: ExamRun = {

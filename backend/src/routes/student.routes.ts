@@ -10,6 +10,7 @@ export function createStudentRoutes(c: Collections, db: Db) {
   router.get('/dashboard', studentDashboard(c, db));
   router.get('/classes', controller.listClasses);
   router.post('/classes/join', controller.joinClass);
+  router.get('/classes/:id', controller.getClass);
   router.get('/progress', controller.getProgress);
   router.get('/history', controller.getHistory);
   return router;

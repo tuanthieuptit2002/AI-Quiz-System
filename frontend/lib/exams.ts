@@ -64,6 +64,7 @@ export interface RunSummary {
 export interface StudentExam extends Omit<Exam, 'questions' | 'settings'> {
   settings: Omit<ExamSettings, 'access' | 'classIds' | 'studentIds'>;
   runs: RunSummary[];
+  dueAt: string | null;
 }
 export interface RunQuestion {
   id: string;

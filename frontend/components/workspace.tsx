@@ -33,6 +33,7 @@ import { roleLabel, type Role } from '@/lib/types';
 import { Overview } from './workspace-overview';
 import { UserManagement } from './workspace-users';
 import { ClassManagement, StudentManagement } from './workspace-classes';
+import { ClassDetail } from './classes/class-detail';
 import { HistoryPage, ProgressPage } from './workspace-learning';
 import { ProfilePage } from './workspace-profile';
 import { QuestionBank } from './workspace-questions';
@@ -95,7 +96,7 @@ const navigation = [
     roles: ['ADMIN', 'TEACHER', 'STUDENT'],
   },
 ];
-export function Workspace({ view }: { view: View }) {
+export function Workspace({ view, classId }: { view: View; classId?: string }) {
   const { user, loading, logout, connectionError, reconnect } = useAuth();
   const router = useRouter();
   const [sidebar, setSidebar] = useState(false);
@@ -261,7 +262,12 @@ export function Workspace({ view }: { view: View }) {
             <>
               {view === 'dashboard' && <Overview user={user} />}
               {view === 'users' && <UserManagement user={user} notify={notify} />}
-              {view === 'classes' && <ClassManagement role={user.role} notify={notify} />}
+              {view === 'classes' &&
+                (classId ? (
+                  <ClassDetail id={classId} role={user.role} notify={notify} />
+                ) : (
+                  <ClassManagement role={user.role} notify={notify} />
+                ))}
               {view === 'students' && <StudentManagement />}
               {view === 'history' && <HistoryPage />}
               {view === 'progress' && <ProgressPage />}
@@ -277,7 +283,13 @@ export function Workspace({ view }: { view: View }) {
               {view === 'ai-exams' && <AIExamStudio notify={notify} />}
               {view === 'ai' && <AIStudio notify={notify} />}
               {view === 'exams' &&
-                (user.role === 'STUDENT' ? <StudentExams /> : <ExamManagement notify={notify} />)}
+                (user.role === 'STUDENT' ? (
+                  <Suspense fallback={<Loading />}>
+                    <StudentExams />
+                  </Suspense>
+                ) : (
+                  <ExamManagement notify={notify} />
+                ))}
             </>
           )}
         </main>
