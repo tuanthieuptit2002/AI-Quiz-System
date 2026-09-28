@@ -4,8 +4,6 @@
 #
 # Usage: bash scripts/deploy.sh [--all]
 #   --all  rebuild and restart backend and frontend even if unchanged
-#
-# Called by .github/workflows/deploy.yml over SSH; also safe to run by hand on the VPS.
 set -euo pipefail
 
 APP_DIR=/home/quizspace-tuandev
@@ -54,7 +52,7 @@ deploy_app() {
 
 main() {
   FORCE=0
-  [[ ${1:-} == --all || ${SSH_ORIGINAL_COMMAND:-} == *--all* ]] && FORCE=1
+  [[ ${1:-} == --all ]] && FORCE=1
 
   mkdir -p "$STATE_DIR"
   exec 9>"$STATE_DIR/deploy.lock"
