@@ -1,7 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   Archive,
+  BarChart3,
   BookOpen,
   CheckCircle2,
   ChevronRight,
@@ -179,6 +181,9 @@ export function QuestionBank({ notify }: { notify: Notify }) {
         description="Tổ chức kiến thức. Xây dựng câu hỏi. Nâng tầm mỗi bài kiểm tra."
         action={
           <div className="qb-actions">
+            <Link href="/question-analytics" className="btn btn-secondary">
+              <BarChart3 size={17} /> Phân tích
+            </Link>
             <button className="btn btn-secondary" onClick={() => setImporting(true)}>
               <Upload size={17} /> Nhập file
             </button>

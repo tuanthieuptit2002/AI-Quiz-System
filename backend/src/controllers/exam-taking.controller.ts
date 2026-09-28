@@ -4,7 +4,13 @@ import { z } from 'zod';
 import { collections } from '../database/collections.js';
 import { httpError, objectId } from '../common/http.js';
 import { verifyPassword } from '../common/security.js';
-import { deliverQuestions, finishRun, runDto, transaction } from '../common/exam-runtime.js';
+import {
+  deliverQuestions,
+  finishRun,
+  nextDwell,
+  runDto,
+  transaction,
+} from '../common/exam-runtime.js';
 import type { Exam, ExamRun } from '../models/exam.model.js';
 
 export function createExamTakingController(db: Db) {
@@ -156,6 +162,9 @@ export function createExamTakingController(db: Db) {
         questions,
         responses: questions.map(() => []),
         flagged: questions.map(() => false),
+        dwellMs: questions.map(() => 0),
+        focusIndex: 0,
+        focusedAt: now,
         awarded: questions.map(() => null),
         feedback: questions.map(() => ''),
         currentIndex: 0,
@@ -234,6 +243,7 @@ export function createExamTakingController(db: Db) {
     const flagged = run.questions.map((_, i) =>
       i === body.index ? (body.flagged ?? run.flagged?.[i] ?? false) : (run.flagged?.[i] ?? false),
     );
+    const timing = nextDwell(run, new Date(), next);
     const saved = await c.examRuns.findOneAndUpdate(
       { _id: run._id, status: 'RUNNING', revision: body.revision, expiresAt: { $gt: new Date() } },
       {
@@ -241,6 +251,9 @@ export function createExamTakingController(db: Db) {
           [`responses.${body.index}`]: body.response,
           currentIndex: next,
           flagged,
+          dwellMs: timing.dwellMs,
+          focusIndex: timing.focusIndex,
+          focusedAt: timing.focusedAt,
           ...(body.mutationId ? { lastMutationId: body.mutationId } : { lastMutationId: '' }),
         },
         $inc: { revision: 1 },

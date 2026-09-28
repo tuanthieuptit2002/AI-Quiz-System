@@ -42,6 +42,8 @@ export interface Exam {
 }
 export interface DeliveredQuestion {
   classification?: Pick<QuestionContent, 'subject' | 'topicPath' | 'difficulty'>;
+  /** Bank question id. Absent on attempts delivered before question analytics. */
+  bankQuestionId?: string;
   id: string;
   type: QuestionContent['type'];
   question: string;
@@ -69,6 +71,10 @@ export interface ExamRun {
   questions: DeliveredQuestion[];
   responses: string[][];
   flagged?: boolean[];
+  /** Milliseconds spent on each question. Missing on attempts started before timing. */
+  dwellMs?: number[];
+  focusIndex?: number;
+  focusedAt?: Date;
   lastMutationId?: string;
   awarded: (number | null)[];
   feedback: string[];

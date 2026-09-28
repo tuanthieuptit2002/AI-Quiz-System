@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   AlertCircle,
   LibraryBig,
+  BarChart3,
   ClipboardList,
   BrainCircuit,
   Target,
@@ -35,6 +36,7 @@ import { ClassManagement, StudentManagement } from './workspace-classes';
 import { HistoryPage, ProgressPage } from './workspace-learning';
 import { ProfilePage } from './workspace-profile';
 import { QuestionBank } from './workspace-questions';
+import { QuestionAnalytics } from './workspace-question-analytics';
 import { ExamManagement, StudentExams } from './workspace-exams';
 import { AIExamStudio } from './workspace-ai-exams';
 import { AIStudio } from './workspace-ai';
@@ -52,6 +54,7 @@ export type View =
   | 'practice'
   | 'profile'
   | 'questions'
+  | 'question-analytics'
   | 'exams'
   | 'ai'
   | 'ai-exams';
@@ -65,6 +68,12 @@ const navigation = [
   },
   { view: 'users', label: 'Người dùng', icon: Users, roles: ['ADMIN'] },
   { view: 'questions', label: 'Ngân hàng câu hỏi', icon: LibraryBig, roles: ['ADMIN', 'TEACHER'] },
+  {
+    view: 'question-analytics',
+    label: 'Phân tích câu hỏi',
+    icon: BarChart3,
+    roles: ['ADMIN', 'TEACHER'],
+  },
   { view: 'ai', label: 'Tạo câu hỏi AI', icon: Sparkles, roles: ['ADMIN', 'TEACHER'] },
   {
     view: 'exams',
@@ -264,6 +273,7 @@ export function Workspace({ view }: { view: View }) {
               )}
               {view === 'profile' && <ProfilePage notify={notify} />}
               {view === 'questions' && <QuestionBank notify={notify} />}
+              {view === 'question-analytics' && <QuestionAnalytics />}
               {view === 'ai-exams' && <AIExamStudio notify={notify} />}
               {view === 'ai' && <AIStudio notify={notify} />}
               {view === 'exams' &&
@@ -336,6 +346,7 @@ function Help({ role }: { role: Role }) {
         ]
       : role === 'TEACHER'
         ? [
+            'Phân tích câu hỏi so độ khó đã đặt với tỷ lệ đúng, độ phân biệt và phương án nhiễu.',
             'Tạo lớp học mới và chọn môn học tại trang Lớp học.',
             'Thêm học sinh bằng email đã đăng ký, hoặc chia sẻ mã lớp.',
             'Bạn chỉ có thể quản lý các lớp do chính mình tạo.',

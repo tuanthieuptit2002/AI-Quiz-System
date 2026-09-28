@@ -13,8 +13,27 @@ export function shuffle<T>(values: T[]): T[] {
   }
   return result;
 }
+export const dwellStepMs = 15 * 60 * 1000;
+
+/** Adds time since the last focus to that question, capped so an idle tab cannot dominate. */
+export function nextDwell(
+  run: Pick<ExamRun, 'questions' | 'dwellMs' | 'focusIndex' | 'focusedAt' | 'currentIndex'>,
+  now: Date,
+  nextIndex: number,
+) {
+  const dwellMs = run.questions.map((_, index) => run.dwellMs?.[index] ?? 0);
+  if (run.focusedAt instanceof Date) {
+    const index = run.focusIndex ?? run.currentIndex;
+    if (index >= 0 && index < dwellMs.length) {
+      const delta = Math.min(dwellStepMs, Math.max(0, now.getTime() - run.focusedAt.getTime()));
+      dwellMs[index] += delta;
+    }
+  }
+  return { dwellMs, focusIndex: nextIndex, focusedAt: now };
+}
+
 export function deliverQuestions(exam: Exam): DeliveredQuestion[] {
-  const items = exam.questions.map(({ content: q, points }) => {
+  const items = exam.questions.map(({ content: q, points, questionId }) => {
     let options: DeliveredQuestion['options'] = q.options.map((o) => ({
       id: randomUUID(),
       text: o.text,
@@ -33,8 +52,13 @@ export function deliverQuestions(exam: Exam): DeliveredQuestion[] {
       ];
     if (exam.settings.randomAnswers || ['ORDERING', 'MATCHING'].includes(q.type))
       options = shuffle(options);
+    const bankQuestionId =
+      questionId && typeof questionId.toHexString === 'function'
+        ? questionId.toHexString()
+        : undefined;
     return {
       id: randomUUID(),
+      ...(bankQuestionId ? { bankQuestionId } : {}),
       classification: { subject: q.subject, topicPath: [...q.topicPath], difficulty: q.difficulty },
       type: q.type,
       question: q.question,
@@ -143,6 +167,10 @@ export async function finishRun(
     const run = await c.examRuns.findOne({ _id: id }, { session });
     if (!run || run.status !== 'RUNNING' || (!submit && now < run.expiresAt)) return run;
     const expired = now >= run.expiresAt;
+    const timing = nextDwell(run, expired ? run.expiresAt : now, run.currentIndex);
+    run.dwellMs = timing.dwellMs;
+    run.focusIndex = timing.focusIndex;
+    run.focusedAt = timing.focusedAt;
     if (submit && !expired && revision !== undefined && revision !== run.revision)
       httpError(409, 'Bài làm đã thay đổi. Đồng bộ đáp án trước khi nộp.');
     if (expired && !run.settings.autoSubmit) {
@@ -214,7 +242,17 @@ export function runDto(run: ExamRun, teacher = false) {
     questionCount: run.questions.length,
     answered: run.responses.map((r, i) => responseAnswered(run.questions[i], r)),
     questions: run.questions.map(
-      ({ correct, explanation, rubric, classification: _classification, ...q }, i) => {
+      (
+        {
+          correct,
+          explanation,
+          rubric,
+          classification: _classification,
+          bankQuestionId: _bankQuestionId,
+          ...q
+        },
+        i,
+      ) => {
         if (
           !teacher &&
           run.status === 'RUNNING' &&
