@@ -30,8 +30,9 @@ Nếu đổi địa chỉ backend, đặt `API_SERVER_URL` trong môi trường 
 - **Phiên đăng nhập:** refresh token được xoay mỗi lần dùng, chỉ lưu hash trong MongoDB; phát hiện dùng lại token sẽ thu hồi phiên. Phiên hết hạn sau 7 ngày.
 - **Profile:** tên, giới thiệu, số điện thoại, mục tiêu học tuần, đổi mật khẩu, tải/xóa avatar. Ảnh JPG/PNG/WebP tối đa 500 KB được kiểm tra, resize và mã hóa lại thành WebP.
 - **Admin:** thống kê cộng đồng; tìm kiếm, lọc, phân trang, tạo tài khoản; thay vai trò; khóa/mở tài khoản. Không được tự khóa hoặc đổi quyền của chính mình.
-- **Teacher:** tạo/sửa/xóa lớp, chia sẻ mã lớp, thêm/gỡ học sinh bằng email, xem danh sách học sinh thuộc các lớp của mình.
-- **Student:** tham gia lớp qua mã, xem lớp học, lịch sử thi, điểm trung bình và biểu đồ tiến độ của riêng mình.
+- **Teacher:** quản lý khóa học và lớp học, mời học sinh bằng mã hoặc liên kết, giao bài có hạn nộp, đăng bài học, xem kết quả lớp; tạo câu hỏi, đề thi, chấm bài và xem phân tích câu hỏi.
+- **Student:** tham gia lớp qua mã hoặc liên kết, làm bài được giao, xem lịch sử thi, điểm, tiến độ, phân tích học tập và luyện tập cá nhân của riêng mình.
+- **Mọi vai trò:** nhận thông báo trong ứng dụng qua biểu tượng chuông trên thanh đầu trang.
 
 Mọi route được kiểm tra quyền ở backend. Khóa tài khoản, đổi vai trò, đổi/reset mật khẩu sẽ thu hồi phiên. Chống CSRF bằng Origin + header riêng; API xác thực có rate limit.
 
@@ -102,7 +103,7 @@ Xem [hướng dẫn AI Exam Generator](docs/ai-exam-generator.md) về quy tắc
 
 ## Dữ liệu học tập
 
-Các collection chính: `users`, `sessions`, `classes`, `questions`, `questionVersions`, `exams`, `examRuns`, `examAttempts`, `aiGenerations`, `aiExams`, `gradingSuggestions`, `gradingEvents`, `explanationThreads`, `learningReports` và `practiceSessions`. Unique/TTL index được tạo khi server khởi động.
+Các collection chính: `users`, `sessions`, `courses`, `classes`, `lessons`, `assignments`, `questions`, `questionVersions`, `questionImports`, `exams`, `examRuns`, `examAttempts`, `examActivity`, `aiGenerations`, `aiExams`, `gradingSuggestions`, `gradingEvents`, `explanationThreads`, `learningReports`, `practiceSessions`, `notifications` và `notificationMarks`. Unique/TTL index được tạo khi server khởi động.
 
 Lịch sử và tiến độ đọc dữ liệu thật từ `examAttempts`, không tạo điểm mẫu. Khi bài thi được chấm xong, backend ghi kết quả vào collection này (thang điểm 10). Bài có tự luận/trả lời ngắn chưa chấm đủ không được tính vào tiến độ. Học sinh không thể tự gửi điểm.
 
@@ -112,7 +113,8 @@ Mở **http://localhost:3000/exams**. Admin/Teacher tạo đề, Student xem cá
 
 - Chọn thủ công từ Question Bank hoặc random theo ma trận **Easy / Medium / Hard / Very Hard**; tối đa 100 câu, có điểm riêng từng câu. Chỉ lấy câu hỏi **Sẵn sàng** thuộc quyền quản lý.
 - Cấu hình giờ mở/đóng, thời lượng, số lượt, điểm đạt %, trộn câu/trộn đáp án, xem đáp án sau nộp, quay lại câu trước và tự nộp khi hết giờ.
-- Mã truy cập lưu bằng bcrypt; giới hạn theo lớp hoặc học sinh. Teacher chỉ giao cho lớp/học sinh mình quản lý, hoặc chọn tất cả Student.
+- Mã truy cập lưu bằng bcrypt; giới hạn theo lớp hoặc học sinh. Teacher chỉ giao cho lớp/học sinh mình quản lý, hoặc chọn tất cả Student. Đề đã phát hành còn có thể giao cho lớp kèm hạn nộp (xem **Lớp học & Khóa học**).
+- Tùy chọn **Giám sát phòng thi** ghi nhật ký phiên thi và giới hạn số lần rời trang (xem **Giám sát phòng thi**).
 - Quy trình **Bản nháp → Xem trước → Phát hành**. Đề lưu snapshot câu hỏi; đề đã phát hành không sửa trực tiếp, có thể nhân bản thành đề mới.
 - Student làm đủ 8 dạng câu hỏi, tự lưu câu trả lời, tiếp tục lượt đang làm. Backend kiểm tra deadline, giới hạn lượt và quyền điều hướng; tự nộp phần đã lưu dù đóng trình duyệt.
 - Chấm tự động 6 dạng khách quan; tự luận và trả lời ngắn có nội dung chờ Teacher xác nhận. Điểm hoàn tất đồng bộ sang lịch sử và tiến độ.
@@ -130,6 +132,16 @@ Chi tiết quy tắc, giới hạn và API: [docs/exam-builder.md](docs/exam-bui
 - Xác nhận trước khi nộp, đồng bộ đáp án trước khi chấm; máy chủ quyết định deadline và xử lý hết giờ theo cấu hình đề.
 
 Đáp án chưa tới máy chủ trước deadline không được tính. Bản nháp chưa đồng bộ chỉ giữ trong tab hiện tại; không hỗ trợ mở phòng thi lần đầu khi hoàn toàn offline. Xem [hướng dẫn Exam Player](docs/exam-player.md).
+
+## Giám sát phòng thi — nhật ký và giới hạn rời trang
+
+Teacher bật **Giám sát phòng thi** trong phần cài đặt của đề và chọn số lần được rời trang (1–10, mặc định 3). Đề không bật giám sát sẽ không ghi các sự kiện phía trình duyệt.
+
+- Nhật ký mỗi lượt thi ghi: bắt đầu, rời tab, rời cửa sổ, quay lại, vào/thoát toàn màn hình, trình duyệt không hỗ trợ toàn màn hình, bị chặn sao chép/dán, nộp bài, hết giờ và bị hủy. Kèm IP, trình duyệt và hệ điều hành của phiên.
+- Trong phòng thi, sao chép, dán, menu chuột phải và phím tắt tương ứng bị chặn và được ghi lại.
+- Mỗi lần rời tab hoặc cửa sổ, Student thấy cảnh báo **Lần x/y** và số lần còn lại. Vượt quá giới hạn thì lượt thi bị hủy, kết thúc ngay và không có điểm.
+- Máy chủ quyết định số lần vi phạm; nếu sự kiện chưa gửi được, Student được báo là chưa ghi nhận.
+- Teacher xem nhật ký tại **Đề thi → Bài làm → Xem / chấm**. Tối đa 200 sự kiện phía trình duyệt mỗi lượt. Nhật ký chỉ là tín hiệu tham khảo, một sự kiện chưa đủ để kết luận gian lận.
 
 ## Auto Grading — chấm bài và trợ lý AI
 
@@ -178,6 +190,56 @@ Student bấm **Practice Weak Topics** trên **Phân tích học tập**, hoặc
 
 Xem [hướng dẫn Personalized Quiz](docs/personalized-quiz.md).
 
+## Question Analytics — đánh giá chất lượng câu hỏi
+
+Admin/Teacher mở **Phân tích câu hỏi** tại **http://localhost:3000/question-analytics**, hoặc từ một câu trong Ngân hàng câu hỏi.
+
+- Tính từ các lượt thi đã nộp của đề do mình tạo (Admin: toàn hệ thống), tối đa 2.000 lượt gần nhất. Câu được nhận diện theo câu gốc trong ngân hàng, kể cả khi đề đã trộn câu và đáp án.
+- Mỗi câu có: số lượt làm và lượt đã chấm, tỷ lệ đúng, chỉ số độ khó, thời gian làm trung bình, độ khó thực tế so với độ khó đã đặt và chỉ số phân biệt (nhóm 27% điểm cao so với 27% điểm thấp).
+- Độ khó thực tế: từ 70% đúng là Dễ, từ 40% là Trung bình, từ 20% là Khó, dưới 20% là Rất khó. Chỉ kết luận khi có ít nhất 10 lượt đã chấm.
+- Gắn cờ **Quá dễ** (từ 90% đúng), **Quá khó** (không quá 20%), **Lệch độ khó** và **Phân biệt kém** (dưới 0,2); có cảnh báo bằng lời, ví dụ "được đặt độ khó Dễ nhưng chỉ 25% thí sinh trả lời đúng".
+- Phân bố đáp án: tỷ lệ chọn từng phương án của câu trắc nghiệm, cảnh báo phương án nhiễu được chọn nhiều hơn đáp án đúng hoặc gần như không ai chọn; tỷ lệ đúng từng vị trí của câu Ordering/Matching; các câu trả lời sai phổ biến của Fill in the Blank/Short Answer.
+- Danh sách có tìm kiếm, lọc theo cờ và phân trang.
+
+## Dashboard
+
+Trang **Tổng quan** hiển thị theo vai trò, chỉ đọc dữ liệu thật.
+
+- **Teacher:** số học sinh, đề thi, câu hỏi, lượt làm bài, điểm trung bình, tỷ lệ đạt và các biểu đồ từ bài đã chấm.
+- **Student:** số bài đã hoàn thành, điểm %, điểm cao nhất, thời gian học, cùng chủ đề mạnh/yếu theo đúng ngưỡng của Phân tích học tập.
+- **Admin:** thống kê cộng đồng và quản lý người dùng.
+
+## Lớp học & Khóa học
+
+Teacher mở **Lớp học** tại **http://localhost:3000/classes**; mỗi lớp có trang riêng `/classes/[id]`.
+
+- **Khóa học:** tạo/sửa/xóa khóa học để nhóm các lớp. Danh sách lớp lọc theo khóa học. Xóa khóa học không xóa lớp.
+- **Mời học sinh:** mỗi lớp có mã 10 ký tự và liên kết `/join/[mã]` để sao chép; có thể đổi mã, mã cũ hết hiệu lực. Teacher cũng thêm/gỡ học sinh bằng email.
+- **Tham gia bằng liên kết:** Student chưa đăng nhập được đưa tới đăng nhập/đăng ký rồi tự vào lớp. Teacher mở liên kết chỉ thấy thông báo liên kết dành cho học sinh.
+- **Bài học:** tiêu đề, nội dung và liên kết tài liệu (chỉ http/https).
+- **Giao bài:** chọn đề đã phát hành của mình, loại **Bài kiểm tra** hoặc **Bài thi** và hạn nộp. Mọi thành viên lớp được làm bài đến hạn; sau hạn không bắt đầu được nữa, và thời gian làm bài không vượt quá hạn nộp hay giờ đóng đề. Có thể sửa hạn nộp hoặc gỡ bài; bài đã nộp vẫn được giữ.
+- **Kết quả:** theo từng bài được giao: số học sinh đã nộp, điểm trung bình, số đạt, và bảng từng học sinh với trạng thái và điểm cao nhất.
+- **Student:** xem lớp với các tab Bài kiểm tra / Bài thi / Bài học, số bài còn phải làm, hạn nộp và trạng thái từng bài. Danh sách **Bài thi của tôi** hiển thị hạn nộp và nhãn **Quá hạn nộp**.
+
+## Thông báo
+
+Biểu tượng chuông trên thanh đầu trang hiển thị số thông báo chưa đọc, tự cập nhật mỗi 30 giây và khi quay lại tab.
+
+| Thông báo                   | Người nhận            | Khi nào                                                         |
+| --------------------------- | --------------------- | --------------------------------------------------------------- |
+| Có bài thi mới              | Student được phép làm | Teacher phát hành đề, hoặc giao bài cho lớp (kèm hạn nộp)       |
+| Bài thi sắp bắt đầu         | Student được phép làm | 30 phút trước giờ mở đề                                         |
+| Sắp hết hạn                 | Student chưa nộp bài  | 24 giờ trước hạn nộp của bài được giao hoặc giờ đóng đề         |
+| Đã có kết quả               | Student               | Bài tự luận được chấm xong, hoặc bài được tự nộp khi hết giờ    |
+| Giáo viên đã nhận xét       | Student               | Teacher viết nhận xét mới và đề cho phép xem đáp án sau khi nộp |
+| Học sinh hoàn thành bài thi | Teacher tạo đề        | Student nộp bài                                                 |
+
+- Mỗi sự kiện chỉ gửi một lần cho mỗi người. Thông báo nộp bài được gộp theo đề, ví dụ "An và 3 học sinh khác đã nộp bài…", và đếm lại sau khi Teacher đã đọc.
+- Không nhắc "sắp bắt đầu" hoặc "sắp hết hạn" nếu đề vừa phát hành hay bài vừa giao ngay trước mốc đó, vì thông báo đầu tiên đã ghi thời gian. Student tự bấm nộp thấy kết quả ngay nên không nhận thêm thông báo kết quả.
+- Bấm vào thông báo sẽ đánh dấu đã đọc và mở đúng trang: đề thi được làm nổi bật, trang lớp học, kết quả lượt thi, hoặc danh sách bài nộp của đề với Teacher. Có **Đọc tất cả** và **Xem thêm**.
+- Thời gian trong thông báo theo giờ Việt Nam. Thông báo được giữ 90 ngày. Nhắc lịch được máy chủ kiểm tra mỗi phút.
+- Hiện chỉ có thông báo trong ứng dụng. Mọi thông báo đi qua một hàm gửi chung ở backend, có thể mở rộng sang Email hoặc Web Push.
+
 ## Cấu hình
 
 Xem `backend/.env.example`:
@@ -214,20 +276,24 @@ Auto Grading kiểm tra điểm có trọng số, xác nhận của Teacher, l�
 AI Explanation kiểm tra quyền xem đáp án, hội thoại nhiều lượt, câu hỏi đã trộn, gửi lại request, lease, giới hạn sử dụng và kết quả thay đổi sau khi Teacher chấm lại.
 AI Learning Analysis kiểm tra điểm có trọng số theo chủ đề, mẫu ít, thi lại, phạm vi thời gian, bài cũ/ẩn/chờ chấm, phân quyền, cache và khôi phục job, quota và dữ liệu thay đổi trong lúc AI chạy.
 Personalized Quiz kiểm tra phân bổ 10/10/5, tăng/giảm độ khó, đề sau bỏ chủ đề đã vững, và việc luyện tập không ghi vào điểm bài thi.
-Dashboard giáo viên thống kê học sinh, đề, câu hỏi, lượt làm, điểm trung bình, tỷ lệ đạt và các biểu đồ từ bài đã chấm. Dashboard học sinh hiện số bài, điểm %, thời gian học, cùng chủ đề mạnh/yếu theo đúng ngưỡng phân tích học tập.
+Dashboard kiểm tra số liệu thống kê của Teacher và Student từ bài đã chấm.
+Question Analytics kiểm tra tỷ lệ đúng, độ khó thực tế, chỉ số phân biệt, phân bố đáp án khi đề trộn câu/đáp án và phạm vi dữ liệu theo quyền.
+Giám sát phòng thi kiểm tra ghi nhật ký chỉ khi bật, giới hạn sự kiện, cảnh báo và hủy lượt thi khi rời trang quá số lần.
+Lớp học kiểm tra khóa học, mã mời và đổi mã, bài học, giao bài có hạn nộp, quyền làm bài theo lớp, chặn sau hạn và bảng kết quả.
+Thông báo kiểm tra người nhận của từng loại, nhắc lịch không gửi trùng, gộp thông báo nộp bài, kết quả sau khi chấm, nhận xét mới và API đọc/đánh dấu đã đọc.
 
 ## Cấu trúc
 
 - `backend/src/app.ts`: lắp ghép middleware và routes; `server.ts` khởi động server.
-- `backend/src/routes`: khai báo đường dẫn API theo auth, profile, admin, teacher, student, dashboard, questions, exams, ai, ai-exams, learning-analysis, practice.
+- `backend/src/routes`: khai báo đường dẫn API theo auth, profile, admin, teacher (dashboard, khóa học, lớp học), student, questions (kèm analytics), exams, ai, ai-exams, learning-analysis, practice, notifications.
 - `backend/src/controllers`: xử lý request theo từng nhóm tính năng.
 - `backend/src/middleware`: xác thực, phân quyền, kiểm tra request, giới hạn tần suất và xử lý lỗi.
 - `backend/src/models`: kiểu dữ liệu MongoDB và hàm chuyển dữ liệu trả về client.
 - `backend/src/database`: kết nối MongoDB, collections và indexes.
-- `backend/src/common`: cấu hình, validation, tiện ích JWT/password/cookie, email, chấm thi, DeepSeek adapter, AI worker và bộ đọc nguồn tài liệu.
+- `backend/src/common`: cấu hình, validation, tiện ích JWT/password/cookie, email, chấm thi, nhật ký phòng thi, lớp học, thông báo và nhắc lịch, phân tích câu hỏi, DeepSeek adapter, AI worker và bộ đọc nguồn tài liệu.
 - `backend/scripts`: script kiểm tra database và tạo admin.
 - `backend/test`: kiểm thử tích hợp API.
-- `frontend/app`: các route tài khoản, dashboard, classes, questions, exams, ai và tiến độ học.
+- `frontend/app`: các route tài khoản, dashboard, classes (kèm `/classes/[id]`, `/join/[code]`), questions, question-analytics, exams, phòng thi `/exam/[runId]`, ai, ai-exams, lịch sử, tiến độ, phân tích học tập và luyện tập.
 - `frontend/components`: giao diện theo vai trò và các form quản lý.
 - `frontend/lib/api.ts`: access token trong bộ nhớ và refresh cookie.
 
