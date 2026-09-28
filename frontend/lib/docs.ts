@@ -286,6 +286,7 @@ export const docs: DocArticle[] = [
           'Bấm “Lưu bản nháp”; màn hình phát hành mở ra để kiểm tra lần cuối. Với đề nháp có sẵn, bấm nút “Phát hành” trên thẻ đề.',
           'Bấm “Phát hành đề”. Học sinh được phép thi sẽ nhận thông báo.',
           'Đề đã phát hành không sửa trực tiếp; dùng Nhân bản để tạo đề mới từ đề cũ.',
+          'Nếu chưa đến giờ bắt đầu thi, mở đề và bấm “Thu hồi về nháp” để sửa rồi phát hành lại. Đề đang giao cho lớp cần gỡ khỏi lớp trước.',
           'Đề đã lưu trữ có nút Khôi phục để đưa về trạng thái trước đó. Bản nháp không cần nữa có thể xóa bằng biểu tượng thùng rác trên thẻ đề.',
         ],
       },

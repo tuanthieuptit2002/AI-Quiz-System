@@ -22,6 +22,7 @@ import {
   Shuffle,
   Target,
   Trash2,
+  Undo2,
   Users,
   Sparkles,
 } from 'lucide-react';
@@ -41,6 +42,11 @@ import type { Notify } from './workspace';
 import { ExamEditor } from './exams/exam-editor';
 import { TeacherGrading } from './exams/teacher-grading';
 import { QuestionPreview } from './questions/question-preview';
+
+const canUnpublish = (exam: Exam) =>
+  exam.status === 'PUBLISHED' &&
+  !!exam.settings.startsAt &&
+  new Date(exam.settings.startsAt).getTime() > Date.now();
 
 export function ExamManagement({ notify }: { notify: Notify }) {
   const [editor, setEditor] = useState<Exam | 'new' | null>(null);
@@ -89,11 +95,21 @@ export function ExamManagement({ notify }: { notify: Notify }) {
       setBusy(false);
     }
   }
-  async function action(exam: Exam, action: 'publish' | 'archive' | 'restore' | 'duplicate') {
+  async function action(
+    exam: Exam,
+    action: 'publish' | 'unpublish' | 'archive' | 'restore' | 'duplicate',
+  ) {
     if (
       action === 'archive' &&
       !window.confirm(
         'Lưu trữ đề sẽ chặn lượt thi mới. Các lượt đang làm vẫn được tiếp tục đến hạn. Tiếp tục?',
+      )
+    )
+      return;
+    if (
+      action === 'unpublish' &&
+      !window.confirm(
+        'Thu hồi sẽ ẩn đề khỏi danh sách của học sinh và đưa về Bản nháp để chỉnh sửa. Khi phát hành lại, học sinh không nhận lại thông báo. Tiếp tục?',
       )
     )
       return;
@@ -110,13 +126,15 @@ export function ExamManagement({ notify }: { notify: Notify }) {
       notify(
         action === 'publish'
           ? 'Đã phát hành đề thi theo lịch và quyền truy cập đã chọn.'
-          : action === 'archive'
-            ? 'Đã lưu trữ đề thi.'
-            : action === 'restore'
-              ? result.status === 'PUBLISHED'
-                ? 'Đã khôi phục đề về trạng thái Đã phát hành.'
-                : 'Đã khôi phục đề về Bản nháp. Bạn có thể chỉnh sửa và phát hành lại.'
-              : 'Đã tạo bản sao. Chọn lịch thi và đối tượng trước khi phát hành.',
+          : action === 'unpublish'
+            ? 'Đã thu hồi đề về Bản nháp.'
+            : action === 'archive'
+              ? 'Đã lưu trữ đề thi.'
+              : action === 'restore'
+                ? result.status === 'PUBLISHED'
+                  ? 'Đã khôi phục đề về trạng thái Đã phát hành.'
+                  : 'Đã khôi phục đề về Bản nháp. Bạn có thể chỉnh sửa và phát hành lại.'
+                : 'Đã tạo bản sao. Chọn lịch thi và đối tượng trước khi phát hành.',
       );
     } catch (e) {
       setError((e as Error).message);
@@ -469,7 +487,22 @@ export function ExamManagement({ notify }: { notify: Notify }) {
               lớp luôn trở lại trạng thái Đã phát hành.
             </p>
           )}
+          {canUnpublish(detail) && (
+            <p className="exam-field-note">
+              Đề chưa đến giờ bắt đầu nên có thể thu hồi về Bản nháp để chỉnh sửa. Đề đang giao cho
+              lớp cần được gỡ khỏi lớp trước.
+            </p>
+          )}
           <div className="modal-actions">
+            {canUnpublish(detail) && (
+              <button
+                className="btn btn-secondary"
+                disabled={busy}
+                onClick={() => action(detail, 'unpublish')}
+              >
+                <Undo2 size={16} /> Thu hồi về nháp
+              </button>
+            )}
             {detail.status === 'ARCHIVED' ? (
               <button
                 className="btn btn-primary"

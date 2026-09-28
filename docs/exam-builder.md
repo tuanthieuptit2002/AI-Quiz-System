@@ -23,6 +23,8 @@ Giới hạn mỗi đề: 100 câu, 10 MB nội dung snapshot gồm ảnh, 1–1
 
 Chỉ bản nháp được sửa; cập nhật dùng số phiên bản để phát hiện hai tab sửa đồng thời. Đề đã phát hành khóa nội dung và thiết lập, bảo đảm mọi lượt thi dùng cùng nội dung gốc. Muốn thay đổi, nhân bản thành đề mới. Bản sao giữ câu hỏi, bỏ mã truy cập, lịch và đối tượng; cần chọn lại trước khi phát hành.
 
+Đề đã phát hành có thể **thu hồi về nháp** khi còn trước giờ bắt đầu thi, lúc chưa học sinh nào làm được bài. Đề không đặt giờ bắt đầu thì mở ngay khi phát hành nên không thu hồi được; đề đang giao cho lớp cần gỡ khỏi lớp trước. Học sinh không còn thấy đề cho tới khi phát hành lại, và không nhận lại thông báo "Có bài thi mới".
+
 Lưu trữ chặn lượt thi mới, giữ bài làm và cho phép lượt đang chạy hoàn thành đến hạn. Không xóa kết quả đã có.
 
 Khôi phục đưa đề lưu trữ về trạng thái trước khi lưu trữ. Đề đã có bài làm hoặc đang được giao cho lớp luôn trở lại **Đã phát hành** để nội dung vẫn bị khóa; đề lưu trữ trước khi có chức năng này mà chưa được dùng sẽ trở lại **Bản nháp**.
@@ -72,6 +74,7 @@ GET    /api/exams/:id                     Chi tiết và snapshot
 PUT    /api/exams/:id                     { version, content }
 DELETE /api/exams/:id                     Xóa bản nháp
 POST   /api/exams/:id/publish             { version }
+POST   /api/exams/:id/unpublish           { version } Thu hồi về nháp trước giờ bắt đầu
 POST   /api/exams/:id/archive             { version }
 POST   /api/exams/:id/restore             { version } Khôi phục đề lưu trữ
 POST   /api/exams/:id/duplicate           Nhân bản

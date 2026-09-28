@@ -258,6 +258,32 @@ export function createExamController(db: Db) {
     await safely(() => notifyNewExam(c, updated));
     res.json(examDto(updated));
   };
+  const unpublish: RequestHandler = async (req, res) => {
+    const exam = await owned(req);
+    const { version } = z.object({ version: z.number().int().positive() }).strict().parse(req.body);
+    if (exam.status !== 'PUBLISHED') httpError(409, 'Chỉ thu hồi được đề đang phát hành.');
+    const now = new Date();
+    if (!exam.settings.startsAt || exam.settings.startsAt <= now)
+      httpError(409, 'Chỉ thu hồi được đề chưa đến giờ bắt đầu thi.');
+    if (await c.assignments.countDocuments({ examId: exam._id }, { limit: 1 }))
+      httpError(409, 'Đề đang được giao cho lớp. Gỡ bài khỏi lớp trước khi thu hồi.');
+    if (await c.examRuns.countDocuments({ examId: exam._id }, { limit: 1 }))
+      httpError(409, 'Đề đã có bài làm. Hãy nhân bản để tạo đề mới.');
+    // admissionRevision changes whenever a start is admitted, so a concurrent start wins the race.
+    const updated = await c.exams.findOneAndUpdate(
+      {
+        _id: exam._id,
+        status: 'PUBLISHED',
+        version,
+        admissionRevision: exam.admissionRevision,
+        'settings.startsAt': { $gt: now },
+      },
+      { $set: { status: 'DRAFT', updatedAt: now }, $inc: { version: 1 } },
+      { returnDocument: 'after' },
+    );
+    if (!updated) httpError(409, 'Đề đã thay đổi. Vui lòng tải lại.');
+    res.json(examDto(updated));
+  };
   const archive: RequestHandler = async (req, res) => {
     const exam = await owned(req);
     const { version } = z.object({ version: z.number().int().positive() }).strict().parse(req.body);
@@ -390,6 +416,7 @@ export function createExamController(db: Db) {
     create,
     update,
     publish,
+    unpublish,
     archive,
     restore,
     remove,

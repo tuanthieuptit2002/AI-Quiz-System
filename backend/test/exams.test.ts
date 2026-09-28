@@ -597,4 +597,55 @@ test('Exam builder and delivery enforce access, timing, randomization and gradin
       assert.equal(draftBack.body.status, 'DRAFT');
     },
   );
+  await t.test('published exams return to draft only before their start time', async () => {
+    const future = {
+      ...settings,
+      classIds: [],
+      studentIds: [student.user.id],
+      startsAt: new Date(Date.now() + 86400000).toISOString(),
+    };
+    const e = await publish(draft([bank[0]], { settings: future }));
+    await post(`/exams/${e.id}/unpublish`, other.accessToken)
+      .send({ version: e.version })
+      .expect(404);
+    await post(`/exams/${e.id}/unpublish`, token)
+      .send({ version: e.version - 1 })
+      .expect(409);
+    const back = await post(`/exams/${e.id}/unpublish`, token)
+      .send({ version: e.version })
+      .expect(200);
+    assert.equal(back.body.status, 'DRAFT');
+    await post(`/exams/${e.id}/unpublish`, token).send({ version: back.body.version }).expect(409);
+    const edited = await put(e.id, token, {
+      version: back.body.version,
+      content: draft([bank[1]], { settings: future }),
+    }).expect(200);
+    await post(`/exams/${e.id}/publish`, token).send({ version: edited.body.version }).expect(200);
+
+    const open = await publish(
+      draft([bank[0]], { settings: { ...settings, classIds: [], studentIds: [student.user.id] } }),
+    );
+    await post(`/exams/${open.id}/unpublish`, token).send({ version: open.version }).expect(409);
+
+    const started = await publish(draft([bank[0]], { settings: future }));
+    await c.exams.updateOne(
+      { _id: new ObjectId(started.id) },
+      { $set: { 'settings.startsAt': new Date(Date.now() - 1000) } },
+    );
+    await post(`/exams/${started.id}/unpublish`, token)
+      .send({ version: started.version })
+      .expect(409);
+
+    const assigned = await publish(draft([bank[0]], { settings: future }));
+    await post(`/teacher/classes/${cl.id}/assignments`, token)
+      .send({
+        examId: assigned.id,
+        kind: 'EXAM',
+        dueAt: new Date(Date.now() + 3 * 86400000).toISOString(),
+      })
+      .expect(201);
+    await post(`/exams/${assigned.id}/unpublish`, token)
+      .send({ version: assigned.version })
+      .expect(409);
+  });
 });
