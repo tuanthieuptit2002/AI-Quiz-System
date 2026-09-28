@@ -327,6 +327,15 @@ test('Accounts, RBAC and classroom integration on isolated MongoDB', async (t) =
         .expect(200);
       assert.equal(profile.body.name, 'Student Updated');
       assert.equal(profile.body.weeklyGoal, 5);
+      assert.equal(profile.body.onboarded, false);
+      await patch('/me', studentToken).send({ onboarded: true }).expect(400);
+      const toured = await request(app)
+        .post('/api/me/onboarding')
+        .set('X-Requested-With', 'QuizSpace')
+        .auth(studentToken, { type: 'bearer' })
+        .expect(200);
+      assert.equal(toured.body.onboarded, true);
+      assert.equal((await get('/me', studentToken)).body.onboarded, true);
       const avatar = (image: string) =>
         request(app)
           .put('/api/me/avatar')
