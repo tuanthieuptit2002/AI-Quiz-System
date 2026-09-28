@@ -611,9 +611,8 @@
   justify-content: flex-end;
   gap: 10px;
 }
-.modal.modal-wide {
-  width: 960px;
-  max-width: min(100vw - 24px, 960px);
+.modal.modal-wide .modal-content {
+  width: min(100%, 920px);
 }
 .qb-history-layout {
   display: grid;

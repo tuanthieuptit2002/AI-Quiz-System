@@ -9,6 +9,7 @@
 @import './learning-analysis.css';
 @import './practice.css';
 @import './classes.css';
+@import './notifications.css';
 
 :root {
   --background: #f7f9fa;
@@ -1849,21 +1850,43 @@ td b {
   line-height: 1.8;
   margin-top: 23px;
 }
+/* The dialog covers the viewport and scrolls as a page, so long forms grow naturally. */
 .modal {
+  position: fixed;
+  inset: 0;
   border: 0;
   background: transparent;
-  padding: 20px;
-  max-width: min(100vw - 24px, 570px);
-  width: 570px;
-  max-height: 90svh;
+  padding: 5vh 20px;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #ffffff66 transparent;
   color: var(--foreground);
-  margin: auto;
+}
+.modal[open] {
+  display: flex;
+  flex-direction: column;
+}
+.modal::-webkit-scrollbar {
+  width: 8px;
+}
+.modal::-webkit-scrollbar-thumb {
+  background: #ffffff66;
+  border-radius: 999px;
 }
 .modal::backdrop {
   background: #122f2790;
   backdrop-filter: blur(5px);
 }
 .modal-content {
+  width: min(100%, 530px);
+  margin: auto;
+  flex-shrink: 0;
   border-radius: 16px;
   background: white;
   padding: 26px;
@@ -3040,9 +3063,7 @@ td b {
     font-size: 11px;
   }
   .modal {
-    padding: 10px;
-    width: 100%;
-    max-width: calc(100vw - 14px);
+    padding: 16px 10px;
   }
   .modal-content {
     padding: 23px;

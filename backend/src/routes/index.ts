@@ -16,6 +16,7 @@ import { createAIExamRoutes } from './ai-exam.routes.js';
 import { createAIRoutes } from './ai.routes.js';
 import { createLearningRoutes } from './learning.routes.js';
 import { createPracticeRoutes } from './practice.routes.js';
+import { createNotificationRoutes } from './notification.routes.js';
 
 export function createApiRoutes(
   db: Db,
@@ -31,6 +32,7 @@ export function createApiRoutes(
     createAuthRoutes(c, config, mailer, options.requireEmailVerification !== false),
   );
   router.use('/me', auth, createProfileRoutes(c, config));
+  router.use('/notifications', auth, createNotificationRoutes(c));
   router.use('/admin', auth, requireRole('ADMIN'), createAdminRoutes(c));
   router.use('/teacher', auth, requireRole('TEACHER'), createTeacherRoutes(c));
   router.use('/student', auth, requireRole('STUDENT'), createStudentRoutes(c, db));

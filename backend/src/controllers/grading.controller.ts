@@ -6,6 +6,8 @@ import { httpError, objectId } from '../common/http.js';
 import { resultOf, runDto, transaction, writeResult } from '../common/exam-runtime.js';
 import { gradingHash, gradingInput, isWrittenQuestion } from '../common/grading-provider.js';
 import { expireGradingLeases } from '../common/grading-runtime.js';
+import { notifyGraded, safely } from '../common/notifications.js';
+import type { ExamRun } from '../models/exam.model.js';
 import { collections } from '../database/collections.js';
 import {
   gradingEventDto,
@@ -166,6 +168,8 @@ export function createGradingController(db: Db, config: Config) {
       })
       .strict()
       .parse(req.body);
+    let previous: ExamRun['status'] = initial.status;
+    let feedback = false as boolean;
     const run = await transaction(db, async (session) => {
       const run = await c.examRuns.findOne({ _id: initial._id }, { session });
       if (
@@ -174,6 +178,10 @@ export function createGradingController(db: Db, config: Config) {
         run.revision !== body.revision
       )
         httpError(409, 'Bài làm chưa nộp hoặc đã được cập nhật. Tải lại trước khi xác nhận điểm.');
+      previous = run.status;
+      feedback =
+        run.settings.showAnswers &&
+        body.grades.some((g) => g.feedback && g.feedback !== run.feedback[g.index]);
       const events: GradingEvent[] = [];
       for (const g of body.grades) {
         const q = run.questions[g.index];
@@ -219,6 +227,7 @@ export function createGradingController(db: Db, config: Config) {
       await writeResult(db, run, session);
       return run;
     });
+    await safely(() => notifyGraded(c, previous, run!, req.user!.name, feedback));
     res.json(runDto(run!, true));
   };
   return { overview, suggest, dismiss, grade };

@@ -28,6 +28,7 @@ import {
   runSummary,
   type RunRow,
 } from '../common/classroom.js';
+import { notifyAssignment, safely } from '../common/notifications.js';
 
 const newCode = () => randomBytes(5).toString('hex').toUpperCase();
 const duplicate = (error: unknown) => error instanceof MongoServerError && error.code === 11000;
@@ -284,6 +285,7 @@ export function createTeacherController(c: Collections) {
       if (duplicate(error)) httpError(409, 'Đề thi này đã được giao cho lớp.');
       throw error;
     }
+    await safely(() => notifyAssignment(c, cl, exam, assignment));
     const exams = await assignedExams(c, [assignment]);
     res.status(201).json(assignmentView(assignment, exams.get(exam._id.toHexString())));
   };

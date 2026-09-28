@@ -13,6 +13,7 @@ import {
 } from '../models/question.model.js';
 import { examDto, type Exam, type ExamQuestion } from '../models/exam.model.js';
 import { runDto } from '../common/exam-runtime.js';
+import { notifyNewExam, safely } from '../common/notifications.js';
 import { activityView } from '../common/exam-activity.js';
 import { activityLimit, clientActivityTypes } from '../models/exam-activity.model.js';
 
@@ -249,6 +250,7 @@ export function createExamController(db: Db) {
       { returnDocument: 'after' },
     );
     if (!updated) httpError(409, 'Đề không còn là bản nháp hoặc đã thay đổi.');
+    await safely(() => notifyNewExam(c, updated));
     res.json(examDto(updated));
   };
   const archive: RequestHandler = async (req, res) => {

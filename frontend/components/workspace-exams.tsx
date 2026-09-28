@@ -52,9 +52,29 @@ export function ExamManagement({ notify }: { notify: Notify }) {
   const params = new URLSearchParams({ search, page: String(page) });
   if (status) params.set('status', status);
   const list = useQuery<{ exams: Exam[]; total: number; pages: number }>(`/exams?${params}`);
+  const router = useRouter();
+  const target = useSearchParams().get('submissions') || '';
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [editor, submissions]);
+  useEffect(() => {
+    if (!/^[a-f\d]{24}$/i.test(target)) return;
+    let active = true;
+    api<Exam>(`/exams/${target}`)
+      .then((exam) => {
+        if (!active) return;
+        setSubmissions(exam);
+        router.replace('/exams', { scroll: false });
+      })
+      .catch((e) => {
+        if (!active) return;
+        notify((e as Error).message, true);
+        router.replace('/exams', { scroll: false });
+      });
+    return () => {
+      active = false;
+    };
+  }, [target, notify, router]);
   async function open(id: string, edit = false) {
     setBusy(true);
     try {

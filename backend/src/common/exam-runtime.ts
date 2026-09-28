@@ -5,6 +5,7 @@ import type { DeliveredQuestion, Exam, ExamRun } from '../models/exam.model.js';
 import { httpError } from './http.js';
 import { isWrittenQuestion } from './grading-provider.js';
 import { recordExamActivity } from './exam-activity.js';
+import { notifyRunFinished, safely } from './notifications.js';
 
 export function shuffle<T>(values: T[]): T[] {
   const result = [...values];
@@ -165,7 +166,9 @@ export async function finishRun(
   context?: { ip?: string; userAgent?: string; device?: string },
 ) {
   const c = collections(db);
-  return transaction(db, async (session) => {
+  let finished = false as boolean;
+  const result = await transaction(db, async (session) => {
+    finished = false;
     const run = await c.examRuns.findOne({ _id: id }, { session });
     if (!run || run.status !== 'RUNNING' || (!submit && now < run.expiresAt)) return run;
     const expired = now >= run.expiresAt;
@@ -193,8 +196,14 @@ export async function finishRun(
       context,
       session,
     );
+    finished = true;
     return run;
   });
+  if (finished && result) {
+    const run = result;
+    await safely(() => notifyRunFinished(c, run, !submit || now >= run.expiresAt));
+  }
+  return result;
 }
 
 const leaveTypes = ['tab_changed', 'window_blur'] as const;

@@ -3,6 +3,7 @@ import { ensureIndexes } from './database/indexes.js';
 import { loadConfig } from './common/config.js';
 import { createApp } from './app.js';
 import { startExamClock } from './common/exam-runtime.js';
+import { startNotificationClock } from './common/notifications.js';
 import { startAIWorker } from './common/ai-runtime.js';
 import { startAIExamWorker } from './common/ai-exam-runtime.js';
 import { createExamPlanner } from './common/ai-exam-provider.js';
@@ -19,6 +20,7 @@ try {
   const db = await connectDatabase();
   await ensureIndexes(db);
   const stopExamClock = startExamClock(db);
+  const stopNotifications = startNotificationClock(db);
   const stopAIWorker = startAIWorker(db, createDeepSeekGenerator(config));
   const stopGrading = startGradingWorker(db, createDeepSeekGrader(config));
   const stopExplanations = startExplanationWorker(db, createDeepSeekExplainer(config));
@@ -40,6 +42,7 @@ try {
   for (const signal of ['SIGTERM', 'SIGINT'])
     process.once(signal, () => {
       stopExamClock();
+      stopNotifications();
       stopAIWorker();
       stopAIExams();
       stopGrading();

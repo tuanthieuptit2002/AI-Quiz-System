@@ -1,0 +1,228 @@
+.notif {
+  position: relative;
+}
+.notif-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: transparent;
+  color: #6f8279;
+  border: 1px solid transparent;
+}
+.notif-trigger:hover,
+.notif-trigger.active {
+  background: #f1f6f2;
+  color: #213e30;
+  border-color: #e3ebe5;
+}
+.notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 1px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #d14343;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+  box-shadow: 0 0 0 2px #fff;
+}
+.notif-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: -8px;
+  width: 370px;
+  max-width: calc(100vw - 24px);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 18px 50px #1d3a2c24;
+  overflow: hidden;
+  z-index: 40;
+  animation: appear 0.18s ease-out;
+}
+.notif-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 16px 13px;
+  border-bottom: 1px solid var(--border);
+}
+.notif-head b {
+  display: block;
+  font-size: 14px;
+  color: #1f3a2d;
+}
+.notif-head small {
+  font-size: 11px;
+  color: var(--muted);
+}
+.notif-read-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 650;
+  padding: 6px 8px;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+.notif-read-all:hover:not(:disabled) {
+  background: #eef6f2;
+}
+.notif-read-all:disabled {
+  color: #b4c0ba;
+  cursor: default;
+}
+.notif-error {
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 11px;
+  color: #b73d45;
+  background: #fdf1f1;
+}
+.notif-list {
+  max-height: min(460px, calc(100vh - 170px));
+  overflow-y: auto;
+}
+.notif-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  width: 100%;
+  padding: 13px 30px 13px 16px;
+  background: #fff;
+  border-bottom: 1px solid #f1f4f1;
+  text-align: left;
+}
+.notif-item:hover {
+  background: #f7faf8;
+}
+.notif-item.unread {
+  background: #f3faf6;
+}
+.notif-item.unread:hover {
+  background: #ebf6f0;
+}
+.notif-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+.notif-icon.green {
+  background: #e6f4ee;
+  color: var(--primary);
+}
+.notif-icon.blue {
+  background: #e8f0fb;
+  color: #3869b8;
+}
+.notif-icon.amber {
+  background: #fcf2e0;
+  color: #b7791f;
+}
+.notif-icon.violet {
+  background: #f0ebfb;
+  color: #7152b8;
+}
+.notif-icon.teal {
+  background: #e3f4f5;
+  color: #1f8791;
+}
+.notif-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.notif-text b {
+  font-size: 12.5px;
+  color: #1f3a2d;
+}
+.notif-text span {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #5b6d63;
+  overflow-wrap: anywhere;
+}
+.notif-text small {
+  font-size: 10.5px;
+  color: #9aa8a1;
+}
+.notif-dot {
+  position: absolute;
+  top: 18px;
+  right: 14px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+.notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 34px 24px;
+  text-align: center;
+  color: var(--muted);
+}
+.notif-empty b {
+  font-size: 13px;
+  color: #33503f;
+}
+.notif-empty p {
+  margin: 0;
+  font-size: 12px;
+}
+.notif-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #eef5f1;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+.notif-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px;
+  background: #fff;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 650;
+}
+.notif-more:hover:not(:disabled) {
+  background: #f5faf7;
+}
+@media (max-width: 760px) {
+  .notif-panel {
+    position: fixed;
+    top: 70px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+  }
+}

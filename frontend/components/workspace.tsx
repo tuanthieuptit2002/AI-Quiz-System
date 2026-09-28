@@ -43,6 +43,7 @@ import { AIExamStudio } from './workspace-ai-exams';
 import { AIStudio } from './workspace-ai';
 import { LearningAnalysisPage } from './workspace-analysis';
 import { PracticeStudio } from './practice/practice-studio';
+import { NotificationBell } from './notification-bell';
 
 export type View =
   | 'dashboard'
@@ -238,6 +239,7 @@ export function Workspace({ view, classId }: { view: View; classId?: string }) {
             <span className="connection-status">
               <i /> Đã kết nối
             </span>
+            <NotificationBell />
             <span className="topbar-separator" />
             <Link href="/profile" aria-label="Hồ sơ cá nhân">
               <Avatar user={user} size="sm" />
@@ -288,7 +290,9 @@ export function Workspace({ view, classId }: { view: View; classId?: string }) {
                     <StudentExams />
                   </Suspense>
                 ) : (
-                  <ExamManagement notify={notify} />
+                  <Suspense fallback={<Loading />}>
+                    <ExamManagement notify={notify} />
+                  </Suspense>
                 ))}
             </>
           )}
