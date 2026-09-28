@@ -6,6 +6,7 @@
 @import './exam-player.css';
 @import './grading.css';
 @import './explanations.css';
+@import './learning-analysis.css';
 
 :root {
   --background: #f7f9fa;

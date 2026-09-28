@@ -1,5 +1,6 @@
 'use client';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, RefreshCw, Sparkles, Check } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -56,6 +57,11 @@ export function RunResult({ run: initial, close }: { run: ExamRun; close: () => 
         </p>
       </div>
       <ResultSummary run={run} />
+      {run.status === 'SUBMITTED' && (
+        <Link className="btn btn-secondary" href="/learning-analysis">
+          <Sparkles size={16} /> Xem phân tích học tập & gợi ý ôn
+        </Link>
+      )}
       {run.status === 'PENDING_REVIEW' && (
         <div className="gr-notice">
           <RefreshCw size={18} />

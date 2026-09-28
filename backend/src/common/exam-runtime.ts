@@ -35,6 +35,7 @@ export function deliverQuestions(exam: Exam): DeliveredQuestion[] {
       options = shuffle(options);
     return {
       id: randomUUID(),
+      classification: { subject: q.subject, topicPath: [...q.topicPath], difficulty: q.difficulty },
       type: q.type,
       question: q.question,
       image: q.image,
@@ -212,11 +213,18 @@ export function runDto(run: ExamRun, teacher = false) {
     serverTime: new Date(),
     questionCount: run.questions.length,
     answered: run.responses.map((r, i) => responseAnswered(run.questions[i], r)),
-    questions: run.questions.map(({ correct, explanation, rubric, ...q }, i) => {
-      if (!teacher && run.status === 'RUNNING' && !run.settings.allowBack && i !== run.currentIndex)
-        return { id: q.id, locked: true, points: q.points };
-      return { ...q, ...(show ? { correct, explanation, rubric } : {}) };
-    }),
+    questions: run.questions.map(
+      ({ correct, explanation, rubric, classification: _classification, ...q }, i) => {
+        if (
+          !teacher &&
+          run.status === 'RUNNING' &&
+          !run.settings.allowBack &&
+          i !== run.currentIndex
+        )
+          return { id: q.id, locked: true, points: q.points };
+        return { ...q, ...(show ? { correct, explanation, rubric } : {}) };
+      },
+    ),
     responses: run.responses.map((r, i) =>
       !teacher && run.status === 'RUNNING' && !run.settings.allowBack && i !== run.currentIndex
         ? []

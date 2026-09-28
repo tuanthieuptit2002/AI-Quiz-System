@@ -23,6 +23,7 @@ import {
   AlertCircle,
   LibraryBig,
   ClipboardList,
+  BrainCircuit,
 } from 'lucide-react';
 import { useAuth } from './auth-provider';
 import { Avatar, Logo, Loading, Modal, ErrorBox } from './ui';
@@ -36,6 +37,7 @@ import { QuestionBank } from './workspace-questions';
 import { ExamManagement, StudentExams } from './workspace-exams';
 import { AIExamStudio } from './workspace-ai-exams';
 import { AIStudio } from './workspace-ai';
+import { LearningAnalysisPage } from './workspace-analysis';
 
 export type View =
   | 'dashboard'
@@ -44,6 +46,7 @@ export type View =
   | 'students'
   | 'history'
   | 'progress'
+  | 'learning-analysis'
   | 'profile'
   | 'questions'
   | 'exams'
@@ -71,6 +74,7 @@ const navigation = [
   { view: 'students', label: 'Học sinh', icon: GraduationCap, roles: ['TEACHER'] },
   { view: 'history', label: 'Lịch sử thi', icon: History, roles: ['STUDENT'] },
   { view: 'progress', label: 'Tiến độ học', icon: ChartNoAxesCombined, roles: ['STUDENT'] },
+  { view: 'learning-analysis', label: 'Phân tích học tập', icon: BrainCircuit, roles: ['STUDENT'] },
   {
     view: 'profile',
     label: 'Hồ sơ cá nhân',
@@ -249,6 +253,7 @@ export function Workspace({ view }: { view: View }) {
               {view === 'students' && <StudentManagement />}
               {view === 'history' && <HistoryPage />}
               {view === 'progress' && <ProgressPage />}
+              {view === 'learning-analysis' && <LearningAnalysisPage />}
               {view === 'profile' && <ProfilePage notify={notify} />}
               {view === 'questions' && <QuestionBank notify={notify} />}
               {view === 'ai-exams' && <AIExamStudio notify={notify} />}

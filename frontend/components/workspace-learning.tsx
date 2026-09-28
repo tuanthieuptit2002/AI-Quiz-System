@@ -109,6 +109,11 @@ export function ProgressPage() {
         eyebrow="SMALL STEPS, BIG PROGRESS"
         title="Tiến độ học tập"
         description="Nhìn lại những nỗ lực và tìm động lực cho chặng đường tiếp theo."
+        action={
+          <Link href="/learning-analysis" className="btn btn-secondary">
+            Phân tích với AI <ArrowRight size={16} />
+          </Link>
+        }
       />
       {loading ? (
         <Loading />

@@ -22,6 +22,18 @@ export async function ensureIndexes(db: Db) {
     c.exams.createIndex({ status: 1, 'settings.startsAt': 1 }),
     c.examRuns.createIndex({ examId: 1, studentId: 1, attemptNo: 1 }, { unique: true }),
     c.examRuns.createIndex({ studentId: 1, startedAt: -1 }),
+    c.examRuns.createIndex({ studentId: 1, status: 1, submittedAt: -1, _id: -1 }),
+    c.learningReports.createIndex({ studentId: 1, range: 1, sourceKey: 1 }, { unique: true }),
+    c.learningReports.createIndex({ studentId: 1, 'requests.id': 1 }, { unique: true }),
+    c.learningReports.createIndex({ status: 1, leaseUntil: 1, createdAt: 1 }),
+    c.learningReports.createIndex(
+      { studentId: 1 },
+      {
+        unique: true,
+        name: 'one_active_learning_report_per_student',
+        partialFilterExpression: { status: { $in: ['QUEUED', 'GENERATING'] } },
+      },
+    ),
     c.examRuns.createIndex({ status: 1, expiresAt: 1 }),
     c.gradingSuggestions.createIndex({ ownerId: 1, requestId: 1 }, { unique: true }),
     c.gradingSuggestions.createIndex({ ownerId: 1, createdAt: -1 }),

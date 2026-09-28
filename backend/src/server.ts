@@ -11,6 +11,8 @@ import { createDeepSeekGrader } from './common/grading-provider.js';
 import { startGradingWorker } from './common/grading-runtime.js';
 import { createDeepSeekExplainer } from './common/explanation-provider.js';
 import { startExplanationWorker } from './common/explanation-runtime.js';
+import { startLearningWorker } from './common/learning-runtime.js';
+import { createLearningAnalyst } from './common/learning-provider.js';
 
 try {
   const config = loadConfig();
@@ -20,6 +22,7 @@ try {
   const stopAIWorker = startAIWorker(db, createDeepSeekGenerator(config));
   const stopGrading = startGradingWorker(db, createDeepSeekGrader(config));
   const stopExplanations = startExplanationWorker(db, createDeepSeekExplainer(config));
+  const stopLearning = startLearningWorker(db, createLearningAnalyst(config));
   const stopAIExams = startAIExamWorker(
     db,
     createExamPlanner(config),
@@ -41,6 +44,7 @@ try {
       stopAIExams();
       stopGrading();
       stopExplanations();
+      stopLearning();
       const timeout = setTimeout(() => process.exit(1), 10000).unref();
       server.close(async () => {
         await closeDatabase();

@@ -102,7 +102,7 @@ Xem [hướng dẫn AI Exam Generator](docs/ai-exam-generator.md) về quy tắc
 
 ## Dữ liệu học tập
 
-Các collection chính: `users`, `sessions`, `classes`, `questions`, `questionVersions`, `exams`, `examRuns`, `examAttempts`, `aiGenerations`, `aiExams`, `gradingSuggestions`, `gradingEvents` và `explanationThreads`. Unique/TTL index được tạo khi server khởi động.
+Các collection chính: `users`, `sessions`, `classes`, `questions`, `questionVersions`, `exams`, `examRuns`, `examAttempts`, `aiGenerations`, `aiExams`, `gradingSuggestions`, `gradingEvents`, `explanationThreads` và `learningReports`. Unique/TTL index được tạo khi server khởi động.
 
 Lịch sử và tiến độ đọc dữ liệu thật từ `examAttempts`, không tạo điểm mẫu. Khi bài thi được chấm xong, backend ghi kết quả vào collection này (thang điểm 10). Bài có tự luận/trả lời ngắn chưa chấm đủ không được tính vào tiến độ. Học sinh không thể tự gửi điểm.
 
@@ -153,6 +153,18 @@ Student mở kết quả của lượt thi, chọn **Explain with AI** dưới m
 
 Dùng chung cấu hình DeepSeek. Giới hạn 8 lượt/hội thoại và 50 yêu cầu/Student trong 24 giờ. Xem [hướng dẫn AI Explanation](docs/ai-explanation.md).
 
+## AI Learning Analysis — học đúng trọng tâm
+
+Student chọn **Phân tích học tập** tại **http://localhost:3000/learning-analysis**, hoặc mở từ Tiến độ học / kết quả thi.
+
+- Điểm theo môn và đường dẫn chủ đề, lọc 30/90 ngày hoặc tất cả, biểu đồ kết quả gần đây. Điểm % tính từ tổng điểm đạt/tối đa, có tính trọng số và điểm một phần.
+- Chỉ dùng lần đã chấm gần nhất của mỗi đề, tối đa 200 đề; không tính bài chờ chấm hoặc ẩn điểm từng câu. Bài mới lưu phân loại từng câu theo snapshot; bài cũ thiếu thông tin chỉ tính theo môn.
+- Nhận diện phần cần ôn dưới 60%, phần cần củng cố dưới 80% và điểm mạnh từ 80%; chỉ phân loại khi có ít nhất 5 câu từ 2 đề khác nhau. Nhóm ít mẫu được ghi rõ.
+- DeepSeek đề xuất ưu tiên, các bước ôn, thời lượng và bài tập tự kiểm tra dựa trên số liệu. Chỉ gửi thống kê chủ đề, không gửi bài làm/đáp án/thông tin tài khoản, không sửa điểm.
+- Báo cáo được lưu và dùng lại cho cùng dữ liệu; thay đổi điểm/bài thi làm mới nguồn phân tích. Có phục hồi sau refresh, chống gửi trùng và thử lại khi lỗi AI.
+
+Dùng chung cấu hình DeepSeek; tối đa 10 yêu cầu/Student trong 24 giờ. Xem [hướng dẫn AI Learning Analysis](docs/ai-learning-analysis.md).
+
 ## Cấu hình
 
 Xem `backend/.env.example`:
@@ -187,6 +199,7 @@ Kiểm tra gồm tài khoản/RBAC, Question Bank, import/export, Exam Builder, 
 Exam Player có thêm kiểm thử bản nháp, mất phản hồi, đồng bộ khi có mạng, xung đột đáp án, điều hướng tuần tự và hết giờ.
 Auto Grading kiểm tra điểm có trọng số, xác nhận của Teacher, lịch sử sửa điểm, quyền truy cập, job AI/lease, thử lại và dữ liệu AI không hợp lệ.
 AI Explanation kiểm tra quyền xem đáp án, hội thoại nhiều lượt, câu hỏi đã trộn, gửi lại request, lease, giới hạn sử dụng và kết quả thay đổi sau khi Teacher chấm lại.
+AI Learning Analysis kiểm tra điểm có trọng số theo chủ đề, mẫu ít, thi lại, phạm vi thời gian, bài cũ/ẩn/chờ chấm, phân quyền, cache và khôi phục job, quota và dữ liệu thay đổi trong lúc AI chạy.
 
 ## Cấu trúc
 

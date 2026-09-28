@@ -9,6 +9,7 @@ import type { AIExamJob } from '../models/ai-exam.model.js';
 import type { AIGeneration } from '../models/ai-generation.model.js';
 import type { GradingSuggestion, GradingEvent } from '../models/grading.model.js';
 import type { ExplanationThread } from '../models/explanation.model.js';
+import type { LearningReport } from '../models/learning.model.js';
 
 export function collections(db: Db) {
   return {
@@ -26,6 +27,7 @@ export function collections(db: Db) {
     gradingSuggestions: db.collection<GradingSuggestion>('gradingSuggestions'),
     gradingEvents: db.collection<GradingEvent>('gradingEvents'),
     explanationThreads: db.collection<ExplanationThread>('explanationThreads'),
+    learningReports: db.collection<LearningReport>('learningReports'),
   };
 }
 

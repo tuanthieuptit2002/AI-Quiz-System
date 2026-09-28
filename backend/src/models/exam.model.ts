@@ -41,6 +41,7 @@ export interface Exam {
   updatedAt: Date;
 }
 export interface DeliveredQuestion {
+  classification?: Pick<QuestionContent, 'subject' | 'topicPath' | 'difficulty'>;
   id: string;
   type: QuestionContent['type'];
   question: string;
