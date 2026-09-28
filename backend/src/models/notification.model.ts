@@ -10,6 +10,15 @@ export const notificationTypes = [
 ] as const;
 export type NotificationType = (typeof notificationTypes)[number];
 
+/** Student-facing notifications that are also sent by email. */
+export const emailedTypes: readonly NotificationType[] = [
+  'NEW_EXAM',
+  'EXAM_STARTING',
+  'DEADLINE_SOON',
+  'RESULT_READY',
+  'TEACHER_FEEDBACK',
+];
+
 /** `key` is unique per user so the same event never notifies twice. */
 export interface Notification {
   _id: ObjectId;

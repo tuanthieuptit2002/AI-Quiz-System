@@ -114,5 +114,9 @@ export async function ensureIndexes(db: Db) {
     c.notifications.createIndex({ userId: 1, readAt: 1 }),
     c.notifications.createIndex({ createdAt: 1 }, { expireAfterSeconds: 90 * 86400 }),
     c.notificationMarks.createIndex({ createdAt: 1 }, { expireAfterSeconds: 30 * 86400 }),
+    c.emailJobs.createIndex({ userId: 1, key: 1 }, { unique: true }),
+    c.emailJobs.createIndex({ status: 1, nextAttemptAt: 1 }),
+    c.emailJobs.createIndex({ status: 1, leaseUntil: 1 }),
+    c.emailJobs.createIndex({ createdAt: 1 }, { expireAfterSeconds: 30 * 86400 }),
   ]);
 }

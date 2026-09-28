@@ -13,6 +13,7 @@ import type { LearningReport } from '../models/learning.model.js';
 import type { PracticeSession } from '../models/practice.model.js';
 import type { ExamActivity } from '../models/exam-activity.model.js';
 import type { Notification, NotificationMark } from '../models/notification.model.js';
+import type { EmailJob } from '../models/email.model.js';
 
 export function collections(db: Db) {
   return {
@@ -38,6 +39,7 @@ export function collections(db: Db) {
     practiceSessions: db.collection<PracticeSession>('practiceSessions'),
     notifications: db.collection<Notification>('notifications'),
     notificationMarks: db.collection<NotificationMark>('notificationMarks'),
+    emailJobs: db.collection<EmailJob>('emailJobs'),
   };
 }
 

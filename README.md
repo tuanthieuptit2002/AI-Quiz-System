@@ -103,7 +103,7 @@ Xem [hướng dẫn AI Exam Generator](docs/ai-exam-generator.md) về quy tắc
 
 ## Dữ liệu học tập
 
-Các collection chính: `users`, `sessions`, `courses`, `classes`, `lessons`, `assignments`, `questions`, `questionVersions`, `questionImports`, `exams`, `examRuns`, `examAttempts`, `examActivity`, `aiGenerations`, `aiExams`, `gradingSuggestions`, `gradingEvents`, `explanationThreads`, `learningReports`, `practiceSessions`, `notifications` và `notificationMarks`. Unique/TTL index được tạo khi server khởi động.
+Các collection chính: `users`, `sessions`, `courses`, `classes`, `lessons`, `assignments`, `questions`, `questionVersions`, `questionImports`, `exams`, `examRuns`, `examAttempts`, `examActivity`, `aiGenerations`, `aiExams`, `gradingSuggestions`, `gradingEvents`, `explanationThreads`, `learningReports`, `practiceSessions`, `notifications`, `notificationMarks` và `emailJobs`. Unique/TTL index được tạo khi server khởi động.
 
 Lịch sử và tiến độ đọc dữ liệu thật từ `examAttempts`, không tạo điểm mẫu. Khi bài thi được chấm xong, backend ghi kết quả vào collection này (thang điểm 10). Bài có tự luận/trả lời ngắn chưa chấm đủ không được tính vào tiến độ. Học sinh không thể tự gửi điểm.
 
@@ -238,7 +238,10 @@ Biểu tượng chuông trên thanh đầu trang hiển thị số thông báo c
 - Không nhắc "sắp bắt đầu" hoặc "sắp hết hạn" nếu đề vừa phát hành hay bài vừa giao ngay trước mốc đó, vì thông báo đầu tiên đã ghi thời gian. Student tự bấm nộp thấy kết quả ngay nên không nhận thêm thông báo kết quả.
 - Bấm vào thông báo sẽ đánh dấu đã đọc và mở đúng trang: đề thi được làm nổi bật, trang lớp học, kết quả lượt thi, hoặc danh sách bài nộp của đề với Teacher. Có **Đọc tất cả** và **Xem thêm**.
 - Thời gian trong thông báo theo giờ Việt Nam. Thông báo được giữ 90 ngày. Nhắc lịch được máy chủ kiểm tra mỗi phút.
-- Hiện chỉ có thông báo trong ứng dụng. Mọi thông báo đi qua một hàm gửi chung ở backend, có thể mở rộng sang Email hoặc Web Push.
+- **Email:** mọi thông báo dành cho Student (5 loại đầu trong bảng) cũng được gửi tới email của học sinh, kèm liên kết mở đúng trang. Thông báo cho Teacher chỉ hiện trong ứng dụng.
+  - Email được đưa vào hàng đợi `emailJobs` và một worker trong backend gửi dần, tối đa khoảng 120 email/phút, để phát hành đề cho nhiều học sinh không làm chậm thao tác và không vượt giới hạn SMTP.
+  - SMTP lỗi thì thử lại sau 1 phút, 5 phút, 30 phút, 2 giờ; sau đó đánh dấu `FAILED`. Tài khoản bị khóa hoặc chưa xác minh email được bỏ qua (`SKIPPED`). Email lấy theo địa chỉ hiện tại của học sinh lúc gửi. Hàng đợi được giữ 30 ngày.
+  - Production chưa cấu hình SMTP thì email nằm chờ trong hàng đợi; development ghi email vào `backend/.mail/`.
 
 ## Cấu hình
 

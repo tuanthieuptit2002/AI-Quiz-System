@@ -4,6 +4,7 @@ import { loadConfig } from './common/config.js';
 import { createApp } from './app.js';
 import { startExamClock } from './common/exam-runtime.js';
 import { startNotificationClock } from './common/notifications.js';
+import { startEmailWorker } from './common/email-runtime.js';
 import { startAIWorker } from './common/ai-runtime.js';
 import { startAIExamWorker } from './common/ai-exam-runtime.js';
 import { createExamPlanner } from './common/ai-exam-provider.js';
@@ -21,6 +22,7 @@ try {
   await ensureIndexes(db);
   const stopExamClock = startExamClock(db);
   const stopNotifications = startNotificationClock(db);
+  const stopEmails = startEmailWorker(db, config);
   const stopAIWorker = startAIWorker(db, createDeepSeekGenerator(config));
   const stopGrading = startGradingWorker(db, createDeepSeekGrader(config));
   const stopExplanations = startExplanationWorker(db, createDeepSeekExplainer(config));
@@ -43,6 +45,7 @@ try {
     process.once(signal, () => {
       stopExamClock();
       stopNotifications();
+      stopEmails();
       stopAIWorker();
       stopAIExams();
       stopGrading();

@@ -2,7 +2,12 @@ import { MongoBulkWriteError, ObjectId, type Db } from 'mongodb';
 import { collections, type Collections } from '../database/collections.js';
 import type { Assignment, Classroom } from '../models/classroom.model.js';
 import type { Exam, ExamRun } from '../models/exam.model.js';
-import type { Notification, NotificationType } from '../models/notification.model.js';
+import {
+  emailedTypes,
+  type Notification,
+  type NotificationType,
+} from '../models/notification.model.js';
+import type { EmailJob } from '../models/email.model.js';
 
 export const startLeadMs = 30 * 60000;
 export const deadlineLeadMs = 24 * 3600000;
@@ -19,11 +24,26 @@ export const formatTime = (date: Date) => timeFormat.format(date);
 
 type Message = { type: NotificationType; key: string; title: string; body: string; link: string };
 
-const onlyDuplicates = (error: unknown) => {
-  if (!(error instanceof MongoBulkWriteError)) return false;
+/** Indexes of documents rejected as duplicates; rethrows any other write failure. */
+function duplicateIndexes(error: unknown) {
+  if (!(error instanceof MongoBulkWriteError)) throw error;
   const errors = Array.isArray(error.writeErrors) ? error.writeErrors : [error.writeErrors];
-  return errors.every((e) => e.code === 11000);
-};
+  if (!errors.every((e) => e.code === 11000)) throw error;
+  return new Set(errors.map((e) => e.index));
+}
+
+async function insertNew<T extends { _id: ObjectId }>(
+  insert: (docs: T[]) => Promise<unknown>,
+  docs: T[],
+) {
+  try {
+    await insert(docs);
+    return docs;
+  } catch (error) {
+    const skipped = duplicateIndexes(error);
+    return docs.filter((_, index) => !skipped.has(index));
+  }
+}
 
 /** Delivers one message per user; users who already received `key` are skipped. */
 export async function notify(c: Collections, userIds: ObjectId[], message: Message) {
@@ -38,11 +58,27 @@ export async function notify(c: Collections, userIds: ObjectId[], message: Messa
       readAt: null,
       createdAt,
     }));
-    try {
-      await c.notifications.insertMany(docs, { ordered: false });
-    } catch (error) {
-      if (!onlyDuplicates(error)) throw error;
-    }
+    const delivered = await insertNew(
+      (batch) => c.notifications.insertMany(batch, { ordered: false }),
+      docs,
+    );
+    if (!delivered.length || !emailedTypes.includes(message.type)) continue;
+    const jobs: EmailJob[] = delivered.map((n) => ({
+      _id: new ObjectId(),
+      userId: n.userId,
+      key: message.key,
+      subject: message.title,
+      body: message.body,
+      link: message.link,
+      status: 'QUEUED',
+      attempts: 0,
+      nextAttemptAt: createdAt,
+      leaseUntil: null,
+      error: '',
+      createdAt,
+      sentAt: null,
+    }));
+    await insertNew((batch) => c.emailJobs.insertMany(batch, { ordered: false }), jobs);
   }
 }
 

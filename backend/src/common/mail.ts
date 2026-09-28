@@ -5,6 +5,11 @@ import { randomUUID } from 'node:crypto';
 import type { Config } from './config.js';
 
 export type AccountEmailKind = 'reset' | 'verify';
+export interface MailMessage {
+  to: string;
+  subject: string;
+  text: string;
+}
 
 export async function sendResetEmail(
   email: string,
@@ -12,15 +17,21 @@ export async function sendResetEmail(
   config: Config,
   kind: AccountEmailKind = 'reset',
 ) {
-  const message = {
-    from: config.smtpFrom,
-    to: email,
-    subject: kind === 'verify' ? 'Xác minh email QuizSpace' : 'Đặt lại mật khẩu QuizSpace',
-    text:
-      kind === 'verify'
-        ? `Xác nhận email để bắt đầu dùng QuizSpace.\n\nMở liên kết sau trong 24 giờ:\n${link}\n\nNếu bạn không tạo tài khoản, hãy bỏ qua email này.`
-        : `Bạn đã yêu cầu đặt lại mật khẩu QuizSpace.\n\nMở liên kết sau trong 30 phút:\n${link}\n\nNếu bạn không yêu cầu, hãy bỏ qua email này.`,
-  };
+  await sendMail(
+    {
+      to: email,
+      subject: kind === 'verify' ? 'Xác minh email QuizSpace' : 'Đặt lại mật khẩu QuizSpace',
+      text:
+        kind === 'verify'
+          ? `Xác nhận email để bắt đầu dùng QuizSpace.\n\nMở liên kết sau trong 24 giờ:\n${link}\n\nNếu bạn không tạo tài khoản, hãy bỏ qua email này.`
+          : `Bạn đã yêu cầu đặt lại mật khẩu QuizSpace.\n\nMở liên kết sau trong 30 phút:\n${link}\n\nNếu bạn không yêu cầu, hãy bỏ qua email này.`,
+    },
+    config,
+  );
+}
+
+export async function sendMail(mail: MailMessage, config: Config) {
+  const message = { from: config.smtpFrom, ...mail };
   if (config.smtpHost) {
     const transport = nodemailer.createTransport({
       host: config.smtpHost,

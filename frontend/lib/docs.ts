@@ -140,6 +140,7 @@ export const docs: DocArticle[] = [
           'Sắp hết hạn: 24 giờ trước hạn nộp, chỉ khi bạn chưa nộp bài.',
           'Đã có kết quả khi bài tự luận được chấm xong hoặc bài được tự nộp lúc hết giờ.',
           'Giáo viên đã nhận xét khi có nhận xét mới cho bài làm của bạn.',
+          'Các thông báo trên cũng được gửi tới email đăng ký của bạn, thường trong vòng vài phút.',
         ],
       },
       {
