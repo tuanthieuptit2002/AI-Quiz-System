@@ -3,6 +3,7 @@
 @import './exams.css';
 @import './ai.css';
 @import './ai-exams.css';
+@import './exam-player.css';
 
 :root {
   --background: #f7f9fa;

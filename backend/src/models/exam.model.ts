@@ -67,6 +67,8 @@ export interface ExamRun {
   settings: Pick<ExamSettings, 'showAnswers' | 'allowBack' | 'autoSubmit' | 'passScore'>;
   questions: DeliveredQuestion[];
   responses: string[][];
+  flagged?: boolean[];
+  lastMutationId?: string;
   awarded: (number | null)[];
   feedback: string[];
   currentIndex: number;

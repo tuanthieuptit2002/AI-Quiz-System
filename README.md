@@ -119,6 +119,18 @@ Mở **http://localhost:3000/exams**. Admin/Teacher tạo đề, Student xem cá
 
 Chi tiết quy tắc, giới hạn và API: [docs/exam-builder.md](docs/exam-builder.md).
 
+## Exam Player — phòng thi Student
+
+Đăng nhập Student, mở **Bài thi của tôi** tại **http://localhost:3000/exams**, chọn **Bắt đầu** hoặc tiếp tục lượt đang làm. Phòng thi có đường dẫn riêng `/exam/[runId]` để tải lại và tiếp tục bài.
+
+- Giao diện tập trung cho desktop/mobile, đồng hồ đếm ngược, 8 dạng câu hỏi và điều hướng theo quy định của đề.
+- Đánh dấu câu cần xem lại; bảng số câu, bộ lọc và thống kê đã trả lời/chưa trả lời/đã đánh dấu.
+- Tự lưu đáp án và đánh dấu; giữ bản nháp trong tab khi refresh hoặc mất mạng ngắn hạn, tự đồng bộ khi kết nối lại.
+- Phát hiện xung đột giữa các tab/thiết bị, cho chọn bản cần giữ; gửi lại yêu cầu bị mất phản hồi không làm chuyển câu hai lần.
+- Xác nhận trước khi nộp, đồng bộ đáp án trước khi chấm; máy chủ quyết định deadline và xử lý hết giờ theo cấu hình đề.
+
+Đáp án chưa tới máy chủ trước deadline không được tính. Bản nháp chưa đồng bộ chỉ giữ trong tab hiện tại; không hỗ trợ mở phòng thi lần đầu khi hoàn toàn offline. Xem [hướng dẫn Exam Player](docs/exam-player.md).
+
 ## Cấu hình
 
 Xem `backend/.env.example`:
@@ -150,6 +162,7 @@ npm start
 Dừng các dev server trước khi chạy `npm start` trên cùng cổng.
 Test dùng MongoDB tạm qua `mongodb-memory-server`, không sửa dữ liệu Atlas. Lần đầu có thể tải MongoDB binary.
 Kiểm tra gồm tài khoản/RBAC, Question Bank, import/export, Exam Builder, làm bài/chấm điểm và AI Generator (đọc tài liệu, bảo vệ URL, job nhiều nhóm, duyệt đồng thời và khôi phục khi lỗi). AI trong test tự động được giả lập, không gọi API tính phí.
+Exam Player có thêm kiểm thử bản nháp, mất phản hồi, đồng bộ khi có mạng, xung đột đáp án, điều hướng tuần tự và hết giờ.
 
 ## Cấu trúc
 

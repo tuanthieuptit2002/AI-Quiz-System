@@ -2,6 +2,7 @@ import { randomInt, randomUUID } from 'node:crypto';
 import type { Db, ObjectId, ClientSession } from 'mongodb';
 import { collections } from '../database/collections.js';
 import type { DeliveredQuestion, Exam, ExamRun } from '../models/exam.model.js';
+import { httpError } from './http.js';
 
 export function shuffle<T>(values: T[]): T[] {
   const result = [...values];
@@ -103,12 +104,20 @@ export async function writeResult(db: Db, run: ExamRun, session: ClientSession) 
     { session, upsert: true },
   );
 }
-export async function finishRun(db: Db, id: ObjectId, submit = false, now = new Date()) {
+export async function finishRun(
+  db: Db,
+  id: ObjectId,
+  submit = false,
+  now = new Date(),
+  revision?: number,
+) {
   const c = collections(db);
   return transaction(db, async (session) => {
     const run = await c.examRuns.findOne({ _id: id }, { session });
     if (!run || run.status !== 'RUNNING' || (!submit && now < run.expiresAt)) return run;
     const expired = now >= run.expiresAt;
+    if (submit && !expired && revision !== undefined && revision !== run.revision)
+      httpError(409, 'Bài làm đã thay đổi. Đồng bộ đáp án trước khi nộp.');
     if (expired && !run.settings.autoSubmit) {
       run.status = 'EXPIRED';
       run.submittedAt = null;
@@ -169,11 +178,13 @@ export function runDto(run: ExamRun, teacher = false) {
     submittedAt: run.submittedAt,
     currentIndex: run.currentIndex,
     revision: run.revision,
+    lastMutationId: run.lastMutationId || null,
+    flagged: run.questions.map((_, i) => run.flagged?.[i] || false),
     scorePercent: run.scorePercent,
     passed: run.passed,
     serverTime: new Date(),
     questionCount: run.questions.length,
-    answered: run.responses.map((r) => r.some(Boolean)),
+    answered: run.responses.map((r, i) => responseAnswered(run.questions[i], r)),
     questions: run.questions.map(({ correct, explanation, rubric, ...q }, i) => {
       if (!teacher && run.status === 'RUNNING' && !run.settings.allowBack && i !== run.currentIndex)
         return { id: q.id, locked: true, points: q.points };
@@ -187,4 +198,12 @@ export function runDto(run: ExamRun, teacher = false) {
     awarded: run.status === 'RUNNING' || run.status === 'EXPIRED' || !show ? [] : run.awarded,
     feedback: run.status === 'RUNNING' || !show ? [] : run.feedback,
   };
+}
+
+export function responseAnswered(q: DeliveredQuestion, response: string[]) {
+  const count = response.filter((v) => v.trim()).length;
+  if (q.type === 'FILL_BLANK') return count === q.blankCount && q.blankCount > 0;
+  if (q.type === 'MATCHING') return count === q.left.length && q.left.length > 0;
+  if (q.type === 'ORDERING') return count === q.options.length && q.options.length > 0;
+  return count > 0;
 }

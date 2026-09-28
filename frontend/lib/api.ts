@@ -35,7 +35,7 @@ async function read<T>(response: Response): Promise<T> {
 }
 export function refreshSession(): Promise<AuthResult> {
   if (!refreshPromise)
-    refreshPromise = send('/auth/refresh', { method: 'POST' })
+    refreshPromise = send('/auth/refresh', { method: 'POST', signal: AbortSignal.timeout(12000) })
       .then(read<AuthResult>)
       .then((result) => {
         token = result.accessToken;
@@ -52,10 +52,13 @@ async function authenticatedResponse(path: string, options: RequestInit = {}) {
     try {
       await refreshSession();
       response = await send(path, options);
-    } catch {
-      token = null;
-      window.dispatchEvent(new Event('session-expired'));
-      throw new ApiError(401, 'Phiên đăng nhập đã kết thúc.');
+    } catch (error) {
+      if (error instanceof ApiError && [401, 403].includes(error.status)) {
+        token = null;
+        window.dispatchEvent(new Event('session-expired'));
+        throw new ApiError(401, 'Phiên đăng nhập đã kết thúc.');
+      }
+      throw error;
     }
   }
   return response;

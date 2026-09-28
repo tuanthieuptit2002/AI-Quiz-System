@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Archive,
   ArrowLeft,
@@ -35,7 +36,7 @@ import {
 import { Empty, ErrorBox, Field, Loading, Modal, SectionTitle, Spinner } from './ui';
 import type { Notify } from './workspace';
 import { ExamEditor } from './exams/exam-editor';
-import { ExamPlayer, RunResult } from './exams/exam-player';
+import { RunResult } from './exams/exam-player';
 import { QuestionPreview } from './questions/question-preview';
 
 export function ExamManagement({ notify }: { notify: Notify }) {
@@ -527,9 +528,9 @@ function ExamSubmissions({ exam, close }: { exam: Exam; close: () => void }) {
     </>
   );
 }
-export function StudentExams({ notify }: { notify: Notify }) {
+export function StudentExams() {
   const list = useQuery<{ exams: StudentExam[]; serverTime: string }>('/exams/student');
-  const [run, setRun] = useState<ExamRun | null>(null);
+  const router = useRouter();
   const [starting, setStarting] = useState<StudentExam | null>(null);
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -550,20 +551,16 @@ export function StudentExams({ notify }: { notify: Notify }) {
       clearInterval(timer);
     };
   }, [list.data?.serverTime]);
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [run?.id]);
   async function start() {
     if (!starting) return;
     setBusy(true);
     setError('');
     try {
-      setRun(
-        await api<ExamRun>(`/exams/student/${starting.id}/start`, {
-          method: 'POST',
-          body: jsonBody({ password }),
-        }),
-      );
+      const run = await api<ExamRun>(`/exams/student/${starting.id}/start`, {
+        method: 'POST',
+        body: jsonBody({ password }),
+      });
+      router.push(`/exam/${run.id}`);
       setStarting(null);
       setPassword('');
       list.reload();
@@ -573,27 +570,9 @@ export function StudentExams({ notify }: { notify: Notify }) {
       setBusy(false);
     }
   }
-  async function open(id: string) {
-    setBusy(true);
-    try {
-      setRun(await api<ExamRun>(`/exams/runs/${id}`));
-    } catch (e) {
-      notify((e as Error).message, true);
-    } finally {
-      setBusy(false);
-    }
+  function open(id: string) {
+    router.push(`/exam/${id}`);
   }
-  if (run)
-    return (
-      <ExamPlayer
-        key={run.id}
-        initial={run}
-        close={() => {
-          setRun(null);
-          list.reload();
-        }}
-      />
-    );
   return (
     <>
       <SectionTitle

@@ -84,6 +84,8 @@ export interface ExamRun extends RunSummary {
   settings: Pick<ExamSettings, 'showAnswers' | 'allowBack' | 'autoSubmit' | 'passScore'>;
   questions: RunQuestion[];
   responses: string[][];
+  flagged: boolean[];
+  lastMutationId: string | null;
   awarded: (number | null)[];
   feedback: string[];
   currentIndex: number;

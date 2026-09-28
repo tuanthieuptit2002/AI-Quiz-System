@@ -155,6 +155,7 @@ export function createExamTakingController(db: Db) {
         },
         questions,
         responses: questions.map(() => []),
+        flagged: questions.map(() => false),
         awarded: questions.map(() => null),
         feedback: questions.map(() => ''),
         currentIndex: 0,
@@ -171,7 +172,12 @@ export function createExamTakingController(db: Db) {
     res.status(201).json(runDto(run!));
   };
   const getRun: RequestHandler = async (req, res) => {
-    res.json(runDto(await ownedRun(req)));
+    const run = await ownedRun(req),
+      dto = runDto(run);
+    if (req.query.lean === '1' && run.settings.allowBack && run.status === 'RUNNING') {
+      const { questions: _questions, ...state } = dto;
+      res.json(state);
+    } else res.json(dto);
   };
   const save: RequestHandler = async (req, res) => {
     const run = await ownedRun(req);
@@ -185,9 +191,15 @@ export function createExamTakingController(db: Db) {
         index: z.number().int().min(0),
         response: z.array(z.string().max(20000)).max(30),
         nextIndex: z.number().int().min(0).optional(),
+        flagged: z.boolean().optional(),
+        mutationId: z.uuid().optional(),
       })
       .strict()
       .parse(req.body);
+    if (body.mutationId && body.mutationId === run.lastMutationId) {
+      res.json(runDto(run));
+      return;
+    }
     const q = run.questions[body.index];
     const next = body.nextIndex ?? body.index;
     if (!q || next >= run.questions.length) httpError(400, 'Câu hỏi không hợp lệ.');
@@ -219,10 +231,18 @@ export function createExamTakingController(db: Db) {
     candidate[body.index] = r;
     if (Buffer.byteLength(JSON.stringify({ ...run, responses: candidate })) > 13 * 1024 * 1024)
       httpError(400, 'Bài làm vượt giới hạn dữ liệu. Rút gọn phần trả lời tự luận.');
+    const flagged = run.questions.map((_, i) =>
+      i === body.index ? (body.flagged ?? run.flagged?.[i] ?? false) : (run.flagged?.[i] ?? false),
+    );
     const saved = await c.examRuns.findOneAndUpdate(
       { _id: run._id, status: 'RUNNING', revision: body.revision, expiresAt: { $gt: new Date() } },
       {
-        $set: { [`responses.${body.index}`]: body.response, currentIndex: next },
+        $set: {
+          [`responses.${body.index}`]: body.response,
+          currentIndex: next,
+          flagged,
+          ...(body.mutationId ? { lastMutationId: body.mutationId } : { lastMutationId: '' }),
+        },
         $inc: { revision: 1 },
       },
       { returnDocument: 'after' },
@@ -236,14 +256,17 @@ export function createExamTakingController(db: Db) {
       httpError(409, 'Bài làm đã được cập nhật ở tab khác. Tải lại trước khi tiếp tục.');
     }
     const dto = runDto(saved);
-    if (req.query.lean === '1' && saved.settings.allowBack) {
+    if (req.query.lean === '1' && saved.settings.allowBack && saved.status === 'RUNNING') {
       const { questions: _questions, ...state } = dto;
       res.json(state);
     } else res.json(dto);
   };
   const submit: RequestHandler = async (req, res) => {
     const run = await ownedRun(req);
-    res.json(runDto((await finishRun(db, run._id, true))!));
+    const { revision } = z
+      .object({ revision: z.number().int().min(0).optional() })
+      .parse(req.body || {});
+    res.json(runDto((await finishRun(db, run._id, true, new Date(), revision))!));
   };
   return { list, start, getRun, save, submit };
 }

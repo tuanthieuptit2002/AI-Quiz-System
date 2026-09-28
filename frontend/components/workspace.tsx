@@ -25,7 +25,7 @@ import {
   ClipboardList,
 } from 'lucide-react';
 import { useAuth } from './auth-provider';
-import { Avatar, Logo, Loading, Modal } from './ui';
+import { Avatar, Logo, Loading, Modal, ErrorBox } from './ui';
 import { roleLabel, type Role } from '@/lib/types';
 import { Overview } from './workspace-overview';
 import { UserManagement } from './workspace-users';
@@ -79,7 +79,7 @@ const navigation = [
   },
 ];
 export function Workspace({ view }: { view: View }) {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, connectionError, reconnect } = useAuth();
   const router = useRouter();
   const [sidebar, setSidebar] = useState(false);
   const [search, setSearch] = useState(false);
@@ -89,13 +89,19 @@ export function Workspace({ view }: { view: View }) {
   const [notice, setNotice] = useState<{ message: string; error: boolean } | null>(null);
   const notify = useCallback<Notify>((message, error = false) => setNotice({ message, error }), []);
   useEffect(() => {
-    if (!loading && !user) router.replace('/login');
-  }, [user, loading, router]);
+    if (!loading && !user && !connectionError) router.replace('/login');
+  }, [user, loading, router, connectionError]);
   useEffect(() => {
     if (!notice) return;
     const timer = setTimeout(() => setNotice(null), 5500);
     return () => clearTimeout(timer);
   }, [notice]);
+  if (connectionError && !user)
+    return (
+      <div className="ep-gate">
+        <ErrorBox message={connectionError} retry={reconnect} />
+      </div>
+    );
   if (loading || !user) return <Loading />;
   const nav = navigation.filter((item) => item.roles.includes(user.role));
   const current = navigation.find((item) => item.view === view)!;
@@ -248,11 +254,7 @@ export function Workspace({ view }: { view: View }) {
               {view === 'ai-exams' && <AIExamStudio notify={notify} />}
               {view === 'ai' && <AIStudio notify={notify} />}
               {view === 'exams' &&
-                (user.role === 'STUDENT' ? (
-                  <StudentExams notify={notify} />
-                ) : (
-                  <ExamManagement notify={notify} />
-                ))}
+                (user.role === 'STUDENT' ? <StudentExams /> : <ExamManagement notify={notify} />)}
             </>
           )}
         </main>

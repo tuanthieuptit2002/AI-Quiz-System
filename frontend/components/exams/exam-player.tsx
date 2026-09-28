@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   ArrowDown,
   ArrowLeft,
@@ -11,11 +11,19 @@ import {
   Clock3,
   Send,
   ShieldCheck,
+  Flag,
+  WifiOff,
+  CloudCheck,
+  RefreshCw,
+  CircleHelp,
+  ListChecks,
+  X,
 } from 'lucide-react';
 import { api, jsonBody } from '@/lib/api';
 import { runStatusLabels, type ExamRun, type RunQuestion } from '@/lib/exams';
 import { typeLabels } from '@/lib/questions';
-import { ErrorBox, Spinner } from '../ui';
+import { ErrorBox, Spinner, Modal } from '../ui';
+import { useExamSession } from './use-exam-session';
 
 function AnswerInput({
   q,
@@ -31,7 +39,7 @@ function AnswerInput({
   if (['SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TRUE_FALSE'].includes(q.type))
     return (
       <div className="exam-answer-options">
-        {q.options.map((option) => (
+        {q.options.map((option, index) => (
           <label key={option.id} className={response.includes(option.id) ? 'selected' : ''}>
             <input
               disabled={disabled}
@@ -48,6 +56,7 @@ function AnswerInput({
                 )
               }
             />
+            <span className="ep-option-letter">{String.fromCharCode(65 + index)}</span>
             <span>{option.text}</span>
           </label>
         ))}
@@ -166,7 +175,7 @@ function readable(q: RunQuestion, values: string[]) {
   return values
     .map(
       (v, i) =>
-        `${q.type === 'MATCHING' ? `${q.left[i]?.text} → ` : ''}${q.options.find((o) => o.id === v)?.text || v || '(trống)'}`,
+        `${q.type === 'MATCHING' ? `${q.left?.[i]?.text} → ` : ''}${q.options?.find((o) => o.id === v)?.text || v || '(trống)'}`,
     )
     .join(q.type === 'ORDERING' ? ' → ' : '\n');
 }
@@ -332,294 +341,496 @@ export function RunResult({
   );
 }
 
-export function ExamPlayer({ initial, close }: { initial: ExamRun; close: () => void }) {
-  const [run, setRun] = useState(initial);
-  const current = useRef(initial);
-  const [draft, setDraft] = useState(initial.responses[initial.currentIndex]);
-  const draftRef = useRef(draft);
-  const [dirty, setDirty] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [moving, setMoving] = useState(false);
-  const [error, setError] = useState('');
-  const [seconds, setSeconds] = useState(
-    Math.max(0, Math.ceil((Date.parse(initial.expiresAt) - Date.parse(initial.serverTime)) / 1000)),
-  );
-  const queue = useRef<Promise<void>>(Promise.resolve());
-  const checking = useRef(false);
-  const clockAnchor = useRef({
-    serverTime: Date.parse(initial.serverTime),
-    clientTime: 0,
-  });
-  useEffect(() => {
-    clockAnchor.current.clientTime = performance.now();
-  }, []);
-  const accept = useCallback((value: ExamRun, replaceDraft = false) => {
-    clockAnchor.current = {
-      serverTime: Date.parse(value.serverTime),
-      clientTime: performance.now(),
-    };
-    current.current = value;
-    setRun(value);
-    if (replaceDraft) {
-      draftRef.current = value.responses[value.currentIndex];
-      setDraft(draftRef.current);
-      setDirty(false);
-    }
-  }, []);
-  const save = useCallback(
-    (nextIndex?: number) => {
-      const index = current.current.currentIndex;
-      const response = [...draftRef.current];
-      const task = queue.current.then(async () => {
-        if (current.current.status !== 'RUNNING') return;
-        setSaving(true);
-        try {
-          const responseState = await api<
-            Omit<ExamRun, 'questions'> & { questions?: ExamRun['questions'] }
-          >(`/exams/runs/${current.current.id}?lean=1`, {
-            method: 'PATCH',
-            body: jsonBody({
-              index,
-              response,
-              revision: current.current.revision,
-              ...(nextIndex !== undefined ? { nextIndex } : {}),
-            }),
-          });
-          const value: ExamRun = {
-            ...responseState,
-            questions: responseState.questions || current.current.questions,
-          };
-          accept(value, nextIndex !== undefined || value.status !== 'RUNNING');
-          if (JSON.stringify(draftRef.current) === JSON.stringify(response)) setDirty(false);
-          setError('');
-        } finally {
-          setSaving(false);
-        }
-      });
-      queue.current = task.catch((e) => {
-        setError((e as Error).message);
-      });
-      return task;
-    },
-    [accept],
-  );
-  useEffect(() => {
-    if (!dirty || moving || run.status !== 'RUNNING') return;
-    const timer = setTimeout(() => {
-      void save().catch(() => {});
-    }, 650);
-    return () => clearTimeout(timer);
-  }, [draft, dirty, moving, run.status, save]);
-  useEffect(() => {
-    if (run.status !== 'RUNNING') return;
-    const tick = () => {
-      const left = Math.max(
-        0,
-        Math.ceil(
-          (Date.parse(run.expiresAt) -
-            clockAnchor.current.serverTime -
-            (performance.now() - clockAnchor.current.clientTime)) /
-            1000,
-        ),
-      );
-      setSeconds(left);
-      if (!left && !checking.current) {
-        checking.current = true;
-        api<ExamRun>(`/exams/runs/${run.id}`)
-          .then((value) => accept(value, value.status !== 'RUNNING'))
-          .catch((e) => setError(e.message))
-          .finally(() => {
-            checking.current = false;
-          });
-      }
-    };
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
-  }, [run.id, run.expiresAt, run.status, accept]);
-  useEffect(() => {
-    if (run.status !== 'RUNNING') return;
-    const before = (e: BeforeUnloadEvent) => e.preventDefault();
-    window.addEventListener('beforeunload', before);
-    return () => window.removeEventListener('beforeunload', before);
-  }, [run.status]);
-  async function navigate(next: number) {
-    setMoving(true);
-    try {
-      await save(next);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setMoving(false);
-    }
-  }
+export function ExamPlayer({
+  initial,
+  ownerId,
+  close,
+}: {
+  initial: ExamRun;
+  ownerId: string;
+  close: () => void;
+}) {
+  const {
+    session,
+    run,
+    pending,
+    syncing,
+    moving,
+    offline,
+    error,
+    storageError,
+    recovered,
+    conflicts,
+    lostAnswers,
+    seconds,
+    lastSavedAt,
+  } = useExamSession(initial, ownerId);
+  const [confirm, setConfirm] = useState<'submit' | 'leave' | null>(null);
+  const [filter, setFilter] = useState<'all' | 'unanswered' | 'flagged'>('all');
+  const [dismissRecovery, setDismissRecovery] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [showMap, setShowMap] = useState(false);
+  const answered = run.answered.filter(Boolean).length,
+    flagged = run.flagged.filter(Boolean).length;
+  const index = run.currentIndex,
+    question = run.questions[index];
+  const disabled = moving || !seconds;
+  const saveText = offline
+    ? 'Đang chờ kết nối'
+    : syncing
+      ? 'Đang đồng bộ…'
+      : conflicts.length
+        ? 'Cần kiểm tra xung đột'
+        : pending
+          ? 'Chờ lưu đáp án…'
+          : 'Đã lưu trên máy chủ';
   async function submit() {
-    if (!window.confirm('Nộp bài và kết thúc lượt thi này?')) return;
-    setMoving(true);
+    setNotice('');
     try {
-      await save();
-      accept(await api<ExamRun>(`/exams/runs/${run.id}/submit`, { method: 'POST' }), true);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setMoving(false);
+      await session.submit();
+      setConfirm(null);
+    } catch {
+      setNotice('Chưa nộp được bài. Giữ trang này mở để đồng bộ rồi thử lại.');
     }
   }
-  async function reload() {
-    setMoving(true);
+  async function leave() {
     try {
-      accept(await api<ExamRun>(`/exams/runs/${run.id}`), true);
-      setError('');
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setMoving(false);
+      await session.sync();
+      if (session.getSnapshot().pending) return;
+      close();
+    } catch {
+      setNotice('Chưa lưu lên máy chủ. Bạn có thể tiếp tục làm bài trong lúc chờ kết nối.');
     }
   }
-  if (run.status !== 'RUNNING') return <RunResult run={run} close={close} />;
-  const q = run.questions[run.currentIndex];
+  if (run.status !== 'RUNNING')
+    return (
+      <div className="ep-result-wrap">
+        {lostAnswers > 0 && (
+          <ErrorBox
+            message={`${lostAnswers} câu có thay đổi chưa kịp đồng bộ trước khi lượt thi kết thúc. Kết quả sử dụng các đáp án máy chủ đã nhận.`}
+          />
+        )}
+        <RunResult run={run} close={close} />
+      </div>
+    );
   return (
-    <div className="exam-player">
-      <div className="exam-player-heading">
-        <div>
-          <span className="eyebrow">FOCUS. THINK. ACHIEVE.</span>
-          <h1>{run.title}</h1>
-          <p>
-            {run.subject} · Lượt {run.attemptNo}
-          </p>
+    <div className="ep-shell">
+      <header className="ep-topbar">
+        <button className="ep-brand" onClick={() => setConfirm('leave')} aria-label="Rời phòng thi">
+          <span>
+            <ListChecks size={24} />
+          </span>
+          <b>
+            quizspace<span>.</span>
+          </b>
+          <small>EXAM ROOM</small>
+        </button>
+        <div className="ep-topbar-right">
+          <span className={`ep-connection ${offline ? 'is-offline' : ''}`} role="status">
+            {offline ? <WifiOff size={16} /> : <CloudCheck size={16} />}
+            <span>{saveText}</span>
+          </span>
+          <button
+            className="btn btn-secondary small"
+            onClick={() => setConfirm('leave')}
+            disabled={moving}
+          >
+            <X size={15} /> Rời bài thi
+          </button>
         </div>
-        <div className={`exam-timer ${seconds < 60 ? 'urgent' : ''}`}>
-          <Clock3 size={22} />
+      </header>
+      <main className="ep-main">
+        <div className="ep-heading">
           <div>
-            <strong>
-              {String(Math.floor(seconds / 60)).padStart(2, '0')}:
-              {String(seconds % 60).padStart(2, '0')}
-            </strong>
-            <small>Thời gian còn lại</small>
+            <span className="eyebrow">
+              {run.subject} · LƯỢT THI {run.attemptNo}
+            </span>
+            <h1>{run.title}</h1>
+            <p>Hãy đọc kỹ câu hỏi và chọn câu trả lời phù hợp nhất.</p>
+          </div>
+          <div
+            className={`ep-clock ${seconds <= 60 ? 'is-urgent' : ''}`}
+            role="timer"
+            aria-label="Thời gian còn lại"
+          >
+            <Clock3 size={24} />
+            <div>
+              <small>THỜI GIAN CÒN LẠI</small>
+              <strong>
+                {String(Math.floor(seconds / 60)).padStart(2, '0')}
+                <span>:</span>
+                {String(seconds % 60).padStart(2, '0')}
+              </strong>
+            </div>
           </div>
         </div>
-      </div>
-      <ErrorBox
-        message={error}
-        retry={() => {
-          if (window.confirm('Tải bản đã lưu trên server? Nội dung chưa lưu sẽ bị thay thế.'))
-            void reload();
-        }}
-      />
-      <div className="exam-player-layout">
-        <section className="panel exam-active-question">
-          <div className="exam-review-label">
-            <b>
-              Câu {run.currentIndex + 1} / {run.questionCount}
-            </b>
+        {recovered && !dismissRecovery && (
+          <div className="ep-banner">
+            <CloudCheck size={18} />
             <span>
-              {q.points} điểm · {typeLabels[q.type]}
+              Đã khôi phục bản nháp trên trình duyệt. Các thay đổi đang được đối chiếu và đồng bộ
+              với máy chủ.
+            </span>
+            <button
+              className="icon-btn"
+              onClick={() => setDismissRecovery(true)}
+              aria-label="Ẩn thông báo khôi phục"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+        {storageError && (
+          <ErrorBox message="Trình duyệt không lưu được bản nháp. Giữ trang mở và chờ trạng thái Đã lưu trên máy chủ trước khi refresh." />
+        )}
+        {offline && (
+          <div className="ep-banner ep-banner-warning" role="status">
+            <WifiOff size={19} />
+            <span>
+              {run.settings.allowBack
+                ? 'Kết nối đang gián đoạn. Bạn vẫn có thể trả lời và chuyển câu; bản nháp sẽ tự đồng bộ khi có mạng.'
+                : 'Kết nối đang gián đoạn. Bạn vẫn có thể trả lời câu hiện tại; cần kết nối để chuyển câu theo quy định của đề.'}{' '}
+              Đồng hồ vẫn tiếp tục chạy.
+            </span>
+            <button
+              className="text-link"
+              disabled={syncing}
+              onClick={() => void session.sync().catch(() => {})}
+            >
+              <RefreshCw size={15} /> Kết nối lại
+            </button>
+          </div>
+        )}
+        {!seconds && (
+          <div className="ep-banner ep-banner-warning" role="status">
+            <Clock3 size={19} />
+            <span>
+              Đã hết thời gian làm bài.{' '}
+              {run.settings.autoSubmit
+                ? 'Máy chủ tự nộp các đáp án đã nhận.'
+                : 'Đề này không bật tự nộp; lượt chưa nộp sẽ hết hạn.'}{' '}
+              {offline ? 'Kết nối lại để xem trạng thái bài thi.' : 'Đang xác nhận kết quả…'}
             </span>
           </div>
-          <h2>{q.question}</h2>
-          {q.image && (
-            <Image
-              src={q.image}
-              alt={q.imageAlt}
-              width={1000}
-              height={600}
-              unoptimized
-              className="question-image"
-            />
-          )}
-          <AnswerInput
-            q={q}
-            response={draft}
-            disabled={moving || !seconds}
-            onChange={(value) => {
-              setDraft(value);
-              draftRef.current = value;
-              setDirty(true);
-            }}
-          />
-          <div className="exam-save-status">
-            {saving ? (
-              <>
-                <Spinner /> Đang lưu…
-              </>
-            ) : dirty ? (
-              'Có thay đổi chưa lưu'
-            ) : (
-              <>
-                <CheckCircle2 size={14} /> Đã lưu trên server
-              </>
-            )}
+        )}
+        {!offline && !conflicts.length && (
+          <ErrorBox message={error} retry={() => void session.sync().catch(() => {})} />
+        )}
+        {!!conflicts.length && (
+          <section className="ep-conflicts" role="alert">
+            <h2>
+              <CircleHelp size={19} /> Có thay đổi từ một tab hoặc thiết bị khác
+            </h2>
+            <p>Bản nháp của bạn được giữ lại. Chọn đáp án muốn sử dụng cho từng câu.</p>
+            {conflicts.map((i) => (
+              <div key={i}>
+                <b>
+                  Câu {i + 1}
+                  {run.questions[i].locked ? ' — đã chuyển qua trên thiết bị khác' : ''}
+                </b>
+                <p className="ep-local-answer">
+                  {run.questions[i].locked
+                    ? 'Đề không cho phép sửa câu đã chuyển. Chấp nhận bản máy chủ để tiếp tục.'
+                    : `Trên máy này: ${readable(run.questions[i], run.responses[i]) || '(trống)'}`}
+                </p>
+                <div>
+                  <button
+                    className="btn btn-secondary small"
+                    onClick={() => {
+                      session.resolve(i, false);
+                      void session.sync().catch(() => {});
+                    }}
+                  >
+                    Dùng bản trên máy chủ
+                  </button>
+                  {!run.questions[i].locked && (
+                    <button
+                      className="btn btn-primary small"
+                      onClick={() => {
+                        session.resolve(i, true);
+                        void session.sync().catch(() => {});
+                      }}
+                    >
+                      Giữ đáp án trên máy này
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </section>
+        )}
+        <div className="ep-layout">
+          <section className="ep-question-panel" aria-label={`Câu hỏi ${index + 1}`}>
+            <div className="ep-question-heading">
+              <div>
+                <span className="ep-question-number">{String(index + 1).padStart(2, '0')}</span>
+                <div>
+                  <b>
+                    Câu {index + 1} <span>/ {run.questionCount}</span>
+                  </b>
+                  <small>
+                    {typeLabels[question.type]} · {question.points} điểm
+                  </small>
+                </div>
+              </div>
+              <button
+                className={`ep-flag ${run.flagged[index] ? 'is-flagged' : ''}`}
+                disabled={disabled}
+                aria-pressed={run.flagged[index]}
+                onClick={session.flag}
+              >
+                <Flag size={17} fill={run.flagged[index] ? 'currentColor' : 'none'} />
+                {run.flagged[index] ? 'Đã đánh dấu' : 'Đánh dấu câu'}
+              </button>
+            </div>
+            <div className="ep-question-body">
+              <h2>{question.question}</h2>
+              {question.image && (
+                <Image
+                  src={question.image}
+                  alt={question.imageAlt}
+                  width={1000}
+                  height={600}
+                  unoptimized
+                  className="question-image"
+                />
+              )}
+              <p className="ep-answer-hint">
+                {question.type === 'MULTIPLE_CHOICE'
+                  ? 'Chọn tất cả đáp án bạn cho là đúng.'
+                  : question.type === 'SINGLE_CHOICE' || question.type === 'TRUE_FALSE'
+                    ? 'Chọn một đáp án.'
+                    : 'Hoàn thành câu trả lời bên dưới.'}
+              </p>
+              <AnswerInput
+                q={question}
+                response={run.responses[index]}
+                disabled={disabled}
+                onChange={session.answer}
+              />
+              <div className="ep-question-tools">
+                <span className="exam-save-status" role="status">
+                  {syncing ? (
+                    <Spinner />
+                  ) : offline ? (
+                    <WifiOff size={14} />
+                  ) : (
+                    <CloudCheck size={15} />
+                  )}
+                  {saveText}
+                  {!pending && !syncing && !offline && lastSavedAt && (
+                    <small> · {new Date(lastSavedAt).toLocaleTimeString('vi-VN')}</small>
+                  )}
+                </span>
+                <button
+                  className="text-link"
+                  disabled={disabled || !run.responses[index].length}
+                  onClick={() => session.answer([])}
+                >
+                  Xóa câu trả lời
+                </button>
+              </div>
+            </div>
+            <footer className="ep-navigation">
+              <button
+                className="btn btn-secondary"
+                disabled={disabled || !run.settings.allowBack || index === 0}
+                onClick={() => void session.navigate(index - 1)}
+              >
+                <ChevronLeft size={17} /> Câu trước
+              </button>
+              <span>
+                {index + 1} / {run.questionCount}
+              </span>
+              {index + 1 < run.questionCount ? (
+                <button
+                  className="btn btn-primary"
+                  disabled={disabled}
+                  onClick={() => void session.navigate(index + 1)}
+                >
+                  {moving ? <Spinner /> : null} Câu tiếp <ChevronRight size={17} />
+                </button>
+              ) : (
+                <button
+                  className="btn btn-primary"
+                  disabled={disabled}
+                  onClick={() => {
+                    setNotice('');
+                    setConfirm('submit');
+                  }}
+                >
+                  <Send size={17} /> Nộp bài
+                </button>
+              )}
+            </footer>
+          </section>
+          <aside className="ep-sidebar">
+            <div className="ep-sidebar-title">
+              <div>
+                <ListChecks size={19} />
+                <h2>Tổng quan bài thi</h2>
+              </div>
+              <button
+                className="icon-btn ep-map-toggle"
+                aria-label="Mở danh sách câu hỏi"
+                onClick={() => setShowMap(!showMap)}
+                aria-expanded={showMap}
+              >
+                <ChevronRight size={19} />
+              </button>
+            </div>
+            <div className="ep-completion">
+              <div>
+                <span>Tiến độ hoàn thành</span>
+                <b>{Math.round((answered / run.questionCount) * 100)}%</b>
+              </div>
+              <progress value={answered} max={run.questionCount} />
+            </div>
+            <div className="ep-counts">
+              <div>
+                <i className="answered" />
+                <strong>{answered}</strong>
+                <span>Đã trả lời</span>
+              </div>
+              <div>
+                <i />
+                <strong>{run.questionCount - answered}</strong>
+                <span>Chưa trả lời</span>
+              </div>
+              <div>
+                <Flag size={12} />
+                <strong>{flagged}</strong>
+                <span>Đánh dấu</span>
+              </div>
+            </div>
+            <div className={`ep-map-area ${showMap ? 'is-open' : ''}`}>
+              <label className="ep-map-filter">
+                <span>Lọc câu hỏi</span>
+                <select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)}>
+                  <option value="all">Tất cả câu hỏi</option>
+                  <option value="unanswered">Chưa trả lời</option>
+                  <option value="flagged">Đã đánh dấu</option>
+                </select>
+              </label>
+              <div className="ep-question-map">
+                {run.questions.map(
+                  (q, i) =>
+                    (filter === 'all' ||
+                      (filter === 'flagged' && run.flagged[i]) ||
+                      (filter === 'unanswered' && !run.answered[i])) && (
+                      <button
+                        key={q.id}
+                        aria-label={`Câu ${i + 1}, ${run.answered[i] ? 'đã trả lời' : 'chưa trả lời'}${run.flagged[i] ? ', đã đánh dấu' : ''}`}
+                        aria-current={i === index ? 'step' : undefined}
+                        title={q.locked ? 'Đề thi yêu cầu làm tuần tự' : `Đến câu ${i + 1}`}
+                        className={`${run.answered[i] ? 'answered' : ''} ${i === index ? 'current' : ''} ${run.flagged[i] ? 'flagged' : ''}`}
+                        disabled={disabled || !run.settings.allowBack || i === index}
+                        onClick={() => void session.navigate(i)}
+                      >
+                        {i + 1}
+                        {run.flagged[i] && <Flag size={10} fill="currentColor" />}
+                      </button>
+                    ),
+                )}
+              </div>
+              <div className="ep-map-legend">
+                <span>
+                  <i /> Đang xem
+                </span>
+                <span>
+                  <Flag size={11} /> Cần xem lại
+                </span>
+              </div>
+            </div>
+            <button
+              className="btn btn-primary ep-submit"
+              disabled={disabled || !!conflicts.length}
+              onClick={() => {
+                setNotice('');
+                setConfirm('submit');
+              }}
+            >
+              <Send size={17} /> Nộp bài
+            </button>
+            <p className="ep-rule">
+              <ShieldCheck size={17} />
+              {run.settings.allowBack
+                ? 'Bạn có thể quay lại và đổi đáp án trước khi nộp.'
+                : 'Làm tuần tự. Không thể quay lại câu đã chuyển.'}
+            </p>
+            <p className="ep-rule">
+              <Clock3 size={16} />
+              {run.settings.autoSubmit
+                ? 'Hết giờ, hệ thống tự nộp các đáp án đã lưu.'
+                : 'Bạn cần nộp bài trước khi hết giờ.'}
+            </p>
+          </aside>
+        </div>
+        <footer className="ep-footer">
+          <span>
+            <ShieldCheck size={14} /> Kết quả được xác nhận trên máy chủ
+          </span>
+          <span>QuizSpace · Không gian tập trung của bạn</span>
+        </footer>
+      </main>
+      {confirm && (
+        <Modal
+          title={confirm === 'submit' ? 'Sẵn sàng nộp bài?' : 'Rời phòng thi?'}
+          description={
+            confirm === 'submit'
+              ? 'Sau khi nộp, bạn không thể thay đổi câu trả lời của lượt này.'
+              : 'Đồng hồ vẫn chạy khi bạn rời trang. Bạn có thể tiếp tục lượt đang làm từ Bài thi của tôi.'
+          }
+          close={() => {
+            if (!moving) setConfirm(null);
+          }}
+        >
+          <div className="ep-submit-summary">
+            <div>
+              <b>{answered}</b>
+              <span>Đã trả lời</span>
+            </div>
+            <div>
+              <b>{run.questionCount - answered}</b>
+              <span>Chưa trả lời</span>
+            </div>
+            <div>
+              <b>{flagged}</b>
+              <span>Đánh dấu</span>
+            </div>
           </div>
-          <div className="exam-question-navigation">
+          {confirm === 'submit' && (run.questionCount - answered > 0 || flagged > 0) && (
+            <p className="ep-confirm-note">
+              Còn {run.questionCount - answered} câu chưa hoàn tất và {flagged} câu được đánh dấu.
+              Bạn có thể quay lại kiểm tra trước khi nộp.
+            </p>
+          )}
+          {pending > 0 && (
+            <p className="ep-confirm-note">
+              {pending} câu đang chờ đồng bộ. Hệ thống sẽ lưu xong đáp án trước khi{' '}
+              {confirm === 'submit' ? 'nộp bài' : 'rời trang'}.
+            </p>
+          )}
+          <ErrorBox message={notice} />
+          <div className="ep-modal-actions">
             <button
               className="btn btn-secondary"
-              disabled={!run.settings.allowBack || run.currentIndex === 0 || moving}
-              onClick={() => navigate(run.currentIndex - 1)}
+              disabled={moving}
+              onClick={() => setConfirm(null)}
             >
-              <ChevronLeft size={16} /> Câu trước
+              Tiếp tục làm bài
             </button>
-            {run.currentIndex + 1 < run.questionCount ? (
-              <button
-                className="btn btn-primary"
-                disabled={moving || !seconds}
-                onClick={() => navigate(run.currentIndex + 1)}
-              >
-                {moving ? <Spinner /> : null} Câu tiếp <ChevronRight size={16} />
-              </button>
-            ) : (
-              <button className="btn btn-primary" disabled={moving || !seconds} onClick={submit}>
-                <Send size={16} /> Nộp bài
-              </button>
-            )}
+            <button
+              className="btn btn-primary"
+              disabled={moving || !!conflicts.length || !seconds}
+              onClick={() => void (confirm === 'submit' ? submit() : leave())}
+            >
+              {moving || syncing ? <Spinner /> : <Send size={16} />}
+              {confirm === 'submit' ? 'Xác nhận nộp bài' : 'Lưu & rời bài thi'}
+            </button>
           </div>
-        </section>
-        <aside className="panel exam-run-sidebar">
-          <h3>Tiến độ làm bài</h3>
-          <div className="exam-question-map">
-            {run.questions.map((item, i) => (
-              <button
-                key={item.id}
-                className={`${i === run.currentIndex ? 'current' : ''} ${run.answered[i] ? 'answered' : ''}`}
-                disabled={moving || !run.settings.allowBack || i === run.currentIndex}
-                onClick={() => navigate(i)}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
-          <p>
-            <ShieldCheck size={17} />{' '}
-            {run.settings.allowBack
-              ? 'Bạn có thể xem lại và đổi câu trả lời.'
-              : 'Làm tuần tự. Không thể quay lại câu đã chuyển.'}
-          </p>
-          <p>
-            {run.settings.autoSubmit
-              ? 'Hết giờ, hệ thống tự nộp các câu trả lời đã lưu.'
-              : 'Bạn cần nộp trước khi hết giờ. Hết hạn chưa nộp sẽ không có điểm.'}
-          </p>
-          <button className="btn btn-primary" disabled={moving || !seconds} onClick={submit}>
-            <Send size={16} /> Nộp bài
-          </button>
-          <button
-            className="btn btn-secondary"
-            disabled={moving}
-            onClick={async () => {
-              if (!window.confirm('Rời bài thi? Đồng hồ vẫn tiếp tục chạy.')) return;
-              setMoving(true);
-              try {
-                await save();
-                close();
-              } catch (e) {
-                setError((e as Error).message);
-              } finally {
-                setMoving(false);
-              }
-            }}
-          >
-            Lưu & rời bài thi
-          </button>
-        </aside>
-      </div>
+        </Modal>
+      )}
     </div>
   );
 }
