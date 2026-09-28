@@ -13,6 +13,8 @@ import {
 } from '../models/question.model.js';
 import { examDto, type Exam, type ExamQuestion } from '../models/exam.model.js';
 import { runDto } from '../common/exam-runtime.js';
+import { activityView } from '../common/exam-activity.js';
+import { activityLimit, clientActivityTypes } from '../models/exam-activity.model.js';
 
 export function createExamController(db: Db) {
   const c = collections(db);
@@ -319,6 +321,30 @@ export function createExamController(db: Db) {
     if (!run) httpError(404, 'Không tìm thấy bài làm.');
     res.json(runDto(run, true));
   };
+  const activity: RequestHandler = async (req, res) => {
+    const exam = await owned(req);
+    const run = await c.examRuns.findOne(
+      { _id: objectId(req.params.runId), examId: exam._id },
+      { projection: { settings: 1 } },
+    );
+    if (!run) httpError(404, 'Không tìm thấy bài làm.');
+    const events = await c.examActivity
+      .find({ runId: run._id })
+      .sort({ at: 1, _id: 1 })
+      .limit(activityLimit + 20)
+      .toArray();
+    const monitored = events.filter((event) =>
+      (clientActivityTypes as readonly string[]).includes(event.type),
+    ).length;
+    res.json(
+      activityView(
+        events,
+        run.settings.secure === true,
+        monitored >= activityLimit,
+        run.settings.leaveLimit ?? 3,
+      ),
+    );
+  };
   return {
     list,
     get,
@@ -331,5 +357,6 @@ export function createExamController(db: Db) {
     audience,
     submissions,
     review,
+    activity,
   };
 }

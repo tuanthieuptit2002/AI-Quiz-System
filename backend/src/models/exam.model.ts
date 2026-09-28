@@ -9,6 +9,10 @@ export interface ExamSettings {
   passScore: number;
   randomQuestions: boolean;
   randomAnswers: boolean;
+  /** Logs the session and cancels the attempt after too many leaves. */
+  secure: boolean;
+  /** Allowed tab or window leaves while secure. The next leave cancels the attempt. */
+  leaveLimit: number;
   showAnswers: boolean;
   allowBack: boolean;
   autoSubmit: boolean;
@@ -66,8 +70,13 @@ export interface ExamRun {
   title: string;
   subject: string;
   attemptNo: number;
-  status: 'RUNNING' | 'SUBMITTED' | 'PENDING_REVIEW' | 'EXPIRED';
-  settings: Pick<ExamSettings, 'showAnswers' | 'allowBack' | 'autoSubmit' | 'passScore'>;
+  status: 'RUNNING' | 'SUBMITTED' | 'PENDING_REVIEW' | 'EXPIRED' | 'CANCELLED';
+  settings: Pick<
+    ExamSettings,
+    'showAnswers' | 'allowBack' | 'autoSubmit' | 'passScore' | 'secure'
+  > & {
+    leaveLimit?: number;
+  };
   questions: DeliveredQuestion[];
   responses: string[][];
   flagged?: boolean[];

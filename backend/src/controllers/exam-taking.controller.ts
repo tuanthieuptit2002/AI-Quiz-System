@@ -8,9 +8,12 @@ import {
   deliverQuestions,
   finishRun,
   nextDwell,
+  recordLeave,
   runDto,
   transaction,
 } from '../common/exam-runtime.js';
+import { clientActivityTypes } from '../models/exam-activity.model.js';
+import { clientContext, recordExamActivity } from '../common/exam-activity.js';
 import type { Exam, ExamRun } from '../models/exam.model.js';
 
 export function createExamTakingController(db: Db) {
@@ -28,7 +31,7 @@ export function createExamTakingController(db: Db) {
       studentId: req.user!._id,
     });
     if (!run) httpError(404, 'Không tìm thấy lượt thi.');
-    return (await finishRun(db, run._id)) || run;
+    return (await finishRun(db, run._id, false, new Date(), undefined, clientContext(req))) || run;
   };
   const list: RequestHandler = async (req, res) => {
     const classes = await c.classes
@@ -75,6 +78,8 @@ export function createExamTakingController(db: Db) {
           autoSubmit: e.settings.autoSubmit,
           randomQuestions: e.settings.randomQuestions,
           randomAnswers: e.settings.randomAnswers,
+          secure: e.settings.secure === true,
+          leaveLimit: e.settings.leaveLimit ?? 3,
         },
         runs: runs
           .filter((r) => r.examId.equals(e._id))
@@ -158,6 +163,8 @@ export function createExamTakingController(db: Db) {
           allowBack: latest.settings.allowBack,
           autoSubmit: latest.settings.autoSubmit,
           passScore: latest.settings.passScore,
+          secure: latest.settings.secure === true,
+          leaveLimit: latest.settings.leaveLimit ?? 3,
         },
         questions,
         responses: questions.map(() => []),
@@ -176,6 +183,7 @@ export function createExamTakingController(db: Db) {
         passed: null,
       };
       await c.examRuns.insertOne(run, { session });
+      await recordExamActivity(db, run, 'exam_started', clientContext(req), session);
       return run;
     });
     res.status(201).json(runDto(run!));
@@ -261,7 +269,7 @@ export function createExamTakingController(db: Db) {
       { returnDocument: 'after' },
     );
     if (!saved) {
-      const fresh = await finishRun(db, run._id);
+      const fresh = await finishRun(db, run._id, false, new Date(), undefined, clientContext(req));
       if (fresh && fresh.status !== 'RUNNING') {
         res.json(runDto(fresh));
         return;
@@ -279,7 +287,33 @@ export function createExamTakingController(db: Db) {
     const { revision } = z
       .object({ revision: z.number().int().min(0).optional() })
       .parse(req.body || {});
-    res.json(runDto((await finishRun(db, run._id, true, new Date(), revision))!));
+    res.json(
+      runDto((await finishRun(db, run._id, true, new Date(), revision, clientContext(req)))!),
+    );
   };
-  return { list, start, getRun, save, submit };
+  const report: RequestHandler = async (req, res) => {
+    const run = await ownedRun(req);
+    const limit = run.settings.leaveLimit ?? 3;
+    if (run.status !== 'RUNNING' || run.settings.secure !== true) {
+      res.json({
+        accepted: false,
+        violations: 0,
+        limit,
+        terminated: run.status === 'CANCELLED',
+        warning: false,
+      });
+      return;
+    }
+    const body = z
+      .object({ type: z.enum(clientActivityTypes) })
+      .strict()
+      .parse(req.body);
+    if (body.type === 'tab_changed' || body.type === 'window_blur') {
+      res.json(await recordLeave(db, run._id, body.type, clientContext(req)));
+      return;
+    }
+    const accepted = await recordExamActivity(db, run, body.type, clientContext(req));
+    res.json({ accepted, violations: 0, limit, terminated: false, warning: false });
+  };
+  return { list, start, getRun, save, report, submit };
 }

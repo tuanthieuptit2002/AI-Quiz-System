@@ -11,6 +11,7 @@ import type { GradingSuggestion, GradingEvent } from '../models/grading.model.js
 import type { ExplanationThread } from '../models/explanation.model.js';
 import type { LearningReport } from '../models/learning.model.js';
 import type { PracticeSession } from '../models/practice.model.js';
+import type { ExamActivity } from '../models/exam-activity.model.js';
 
 export function collections(db: Db) {
   return {
@@ -23,6 +24,7 @@ export function collections(db: Db) {
     questionImports: db.collection<QuestionImport>('questionImports'),
     exams: db.collection<Exam>('exams'),
     examRuns: db.collection<ExamRun>('examRuns'),
+    examActivity: db.collection<ExamActivity>('examActivity'),
     aiGenerations: db.collection<AIGeneration>('aiGenerations'),
     aiExams: db.collection<AIExamJob>('aiExams'),
     gradingSuggestions: db.collection<GradingSuggestion>('gradingSuggestions'),

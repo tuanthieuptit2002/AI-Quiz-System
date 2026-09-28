@@ -72,119 +72,123 @@ export function RunResult({ run: initial, close }: { run: ExamRun; close: () => 
         </div>
       )}
       <ErrorBox message={error} retry={() => setRefresh((v) => v + 1)} />
-      {!run.settings.showAnswers && (
+      {run.status !== 'CANCELLED' && !run.settings.showAnswers && (
         <p className="exam-result-note">
           Đề thi này không công khai đáp án và điểm từng câu sau khi nộp.
         </p>
       )}
-      {run.settings.showAnswers && ['SUBMITTED', 'PENDING_REVIEW'].includes(run.status) && (
-        <div className="xe-intro">
-          <span>
-            <Sparkles size={22} />
-          </span>
-          <div>
-            <b>Hiểu bài sâu hơn sau mỗi lần thi</b>
-            <p>
-              Chọn <strong>Explain with AI</strong> dưới một câu để hiểu đáp án và hỏi tiếp điều bạn
-              chưa rõ.
-            </p>
+      {run.status !== 'CANCELLED' &&
+        run.settings.showAnswers &&
+        ['SUBMITTED', 'PENDING_REVIEW'].includes(run.status) && (
+          <div className="xe-intro">
+            <span>
+              <Sparkles size={22} />
+            </span>
+            <div>
+              <b>Hiểu bài sâu hơn sau mỗi lần thi</b>
+              <p>
+                Chọn <strong>Explain with AI</strong> dưới một câu để hiểu đáp án và hỏi tiếp điều
+                bạn chưa rõ.
+              </p>
+            </div>
           </div>
-        </div>
-      )}
-      <div className="exam-review-list">
-        {run.questions.map(
-          (q, i) =>
-            !q.locked && (
-              <section className="panel exam-review-item" key={q.id}>
-                <div className="exam-review-label">
-                  <b>
-                    Câu {i + 1} · {typeLabels[q.type]}
-                  </b>
-                  <span>
-                    {run.awarded[i] === null
-                      ? 'Chờ chấm'
-                      : run.awarded[i] === undefined
-                        ? 'Không công khai điểm'
-                        : `${run.awarded[i]} / ${q.points} điểm`}
-                  </span>
-                </div>
-                <h3>{q.question}</h3>
-                {q.correct &&
-                  ['SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TRUE_FALSE'].includes(q.type) && (
-                    <div className="xe-options">
-                      {q.options.map((option, optionIndex) => {
-                        const correct = q.correct!.includes(option.id),
-                          selected = run.responses[i].includes(option.id);
-                        return (
-                          <div
-                            key={option.id}
-                            className={`${correct ? 'is-correct' : ''} ${selected ? 'is-selected' : ''}`}
-                          >
-                            <span>{String.fromCharCode(65 + optionIndex)}</span>
-                            <p>{option.text}</p>
-                            <small>
-                              {correct && <Check size={13} />}
-                              {selected ? 'Bạn chọn' : correct ? 'Đáp án đúng' : ''}
-                            </small>
-                          </div>
-                        );
-                      })}
+        )}
+      {run.status !== 'CANCELLED' && (
+        <div className="exam-review-list">
+          {run.questions.map(
+            (q, i) =>
+              !q.locked && (
+                <section className="panel exam-review-item" key={q.id}>
+                  <div className="exam-review-label">
+                    <b>
+                      Câu {i + 1} · {typeLabels[q.type]}
+                    </b>
+                    <span>
+                      {run.awarded[i] === null
+                        ? 'Chờ chấm'
+                        : run.awarded[i] === undefined
+                          ? 'Không công khai điểm'
+                          : `${run.awarded[i]} / ${q.points} điểm`}
+                    </span>
+                  </div>
+                  <h3>{q.question}</h3>
+                  {q.correct &&
+                    ['SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TRUE_FALSE'].includes(q.type) && (
+                      <div className="xe-options">
+                        {q.options.map((option, optionIndex) => {
+                          const correct = q.correct!.includes(option.id),
+                            selected = run.responses[i].includes(option.id);
+                          return (
+                            <div
+                              key={option.id}
+                              className={`${correct ? 'is-correct' : ''} ${selected ? 'is-selected' : ''}`}
+                            >
+                              <span>{String.fromCharCode(65 + optionIndex)}</span>
+                              <p>{option.text}</p>
+                              <small>
+                                {correct && <Check size={13} />}
+                                {selected ? 'Bạn chọn' : correct ? 'Đáp án đúng' : ''}
+                              </small>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  {q.image && (
+                    <Image
+                      className="question-image"
+                      src={q.image}
+                      alt={q.imageAlt}
+                      width={1000}
+                      height={600}
+                      unoptimized
+                    />
+                  )}
+                  <div className="exam-response-text">
+                    <small>BÀI LÀM</small>
+                    <p>
+                      {(['SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TRUE_FALSE'].includes(q.type)
+                        ? choiceAnswer(q, run.responses[i])
+                        : readableAnswer(q, run.responses[i])) || 'Chưa trả lời'}
+                    </p>
+                  </div>
+                  {q.correct && (
+                    <div className="answer-explanation">
+                      <b>{q.type === 'ESSAY' ? 'Hướng dẫn chấm' : 'Đáp án tham chiếu'}</b>
+                      <p>
+                        {q.type === 'ESSAY'
+                          ? q.rubric
+                          : ['SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TRUE_FALSE'].includes(q.type)
+                            ? choiceAnswer(q, q.correct)
+                            : readableAnswer(q, q.correct)}
+                      </p>
+                      {q.explanation && <p>{q.explanation}</p>}
                     </div>
                   )}
-                {q.image && (
-                  <Image
-                    className="question-image"
-                    src={q.image}
-                    alt={q.imageAlt}
-                    width={1000}
-                    height={600}
-                    unoptimized
-                  />
-                )}
-                <div className="exam-response-text">
-                  <small>BÀI LÀM</small>
-                  <p>
-                    {(['SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TRUE_FALSE'].includes(q.type)
-                      ? choiceAnswer(q, run.responses[i])
-                      : readableAnswer(q, run.responses[i])) || 'Chưa trả lời'}
-                  </p>
-                </div>
-                {q.correct && (
-                  <div className="answer-explanation">
-                    <b>{q.type === 'ESSAY' ? 'Hướng dẫn chấm' : 'Đáp án tham chiếu'}</b>
-                    <p>
-                      {q.type === 'ESSAY'
-                        ? q.rubric
-                        : ['SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TRUE_FALSE'].includes(q.type)
-                          ? choiceAnswer(q, q.correct)
-                          : readableAnswer(q, q.correct)}
-                    </p>
-                    {q.explanation && <p>{q.explanation}</p>}
-                  </div>
-                )}
-                {run.feedback[i] && (
-                  <div className="gr-teacher-feedback">
-                    <b>Nhận xét từ Teacher</b>
-                    <p>{run.feedback[i]}</p>
-                  </div>
-                )}
-                {run.settings.showAnswers &&
-                  ['SUBMITTED', 'PENDING_REVIEW'].includes(run.status) &&
-                  (q.image ? (
-                    <p className="xe-image-note">
-                      AI hiện giải thích câu dạng văn bản. Với câu có hình ảnh, hãy hỏi Teacher.
-                    </p>
-                  ) : (
-                    <QuestionExplanation
-                      runId={run.id}
-                      index={i}
-                      pendingGrade={run.awarded[i] === null}
-                    />
-                  ))}
-              </section>
-            ),
-        )}
-      </div>
+                  {run.feedback[i] && (
+                    <div className="gr-teacher-feedback">
+                      <b>Nhận xét từ Teacher</b>
+                      <p>{run.feedback[i]}</p>
+                    </div>
+                  )}
+                  {run.settings.showAnswers &&
+                    ['SUBMITTED', 'PENDING_REVIEW'].includes(run.status) &&
+                    (q.image ? (
+                      <p className="xe-image-note">
+                        AI hiện giải thích câu dạng văn bản. Với câu có hình ảnh, hãy hỏi Teacher.
+                      </p>
+                    ) : (
+                      <QuestionExplanation
+                        runId={run.id}
+                        index={i}
+                        pendingGrade={run.awarded[i] === null}
+                      />
+                    ))}
+                </section>
+              ),
+          )}
+        </div>
+      )}
     </div>
   );
 }

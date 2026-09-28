@@ -45,6 +45,7 @@ export async function ensureIndexes(db: Db) {
       },
     ),
     c.examRuns.createIndex({ status: 1, expiresAt: 1 }),
+    c.examActivity.createIndex({ runId: 1, at: 1 }),
     c.gradingSuggestions.createIndex({ ownerId: 1, requestId: 1 }, { unique: true }),
     c.gradingSuggestions.createIndex({ ownerId: 1, createdAt: -1 }),
     c.gradingSuggestions.createIndex({ runId: 1, index: 1, createdAt: -1 }),

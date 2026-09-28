@@ -22,6 +22,8 @@ export const settingsSchema = z
     passScore: z.number().min(0).max(100),
     randomQuestions: z.boolean(),
     randomAnswers: z.boolean(),
+    secure: z.boolean().default(false),
+    leaveLimit: z.number().int().min(1).max(10).default(3),
     showAnswers: z.boolean(),
     allowBack: z.boolean(),
     autoSubmit: z.boolean(),

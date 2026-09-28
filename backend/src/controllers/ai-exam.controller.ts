@@ -347,6 +347,8 @@ export function createAIExamController(db: Db, config: Config) {
         passScore: plan.passScore,
         randomQuestions: true,
         randomAnswers: true,
+        secure: false,
+        leaveLimit: 3,
         showAnswers: false,
         allowBack: true,
         autoSubmit: true,

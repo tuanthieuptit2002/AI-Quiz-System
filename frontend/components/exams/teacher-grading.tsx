@@ -26,6 +26,7 @@ import {
 import { typeLabels } from '@/lib/questions';
 import { Empty, ErrorBox, Field, Modal, Spinner } from '../ui';
 import { ResultSummary } from './result-summary';
+import { ExamActivityLog } from './exam-activity-log';
 
 interface GradeDraft {
   points: string;
@@ -246,13 +247,16 @@ export function TeacherGrading({
         <span className="qb-badge difficulty-medium">{runStatusLabels[run.status]}</span>
       </div>
       <ResultSummary run={run} />
-      <div className="gr-notice">
-        <ShieldCheck size={19} />
-        <span>
-          AI hỗ trợ phân tích bài làm. <b>Teacher quyết định điểm cuối cùng.</b> Chỉ điểm đã xác
-          nhận mới cập nhật kết quả học sinh.
-        </span>
-      </div>
+      <ExamActivityLog examId={run.examId} runId={run.id} />
+      {editable && (
+        <div className="gr-notice">
+          <ShieldCheck size={19} />
+          <span>
+            AI hỗ trợ phân tích bài làm. <b>Teacher quyết định điểm cuối cùng.</b> Chỉ điểm đã xác
+            nhận mới cập nhật kết quả học sinh.
+          </span>
+        </div>
+      )}
       <ErrorBox message={error || query.error} retry={query.error ? reload : undefined} />
       {notice && (
         <p className="gr-success" role="status">

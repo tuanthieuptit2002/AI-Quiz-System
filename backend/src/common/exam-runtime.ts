@@ -4,6 +4,7 @@ import { collections } from '../database/collections.js';
 import type { DeliveredQuestion, Exam, ExamRun } from '../models/exam.model.js';
 import { httpError } from './http.js';
 import { isWrittenQuestion } from './grading-provider.js';
+import { recordExamActivity } from './exam-activity.js';
 
 export function shuffle<T>(values: T[]): T[] {
   const result = [...values];
@@ -161,6 +162,7 @@ export async function finishRun(
   submit = false,
   now = new Date(),
   revision?: number,
+  context?: { ip?: string; userAgent?: string; device?: string },
 ) {
   const c = collections(db);
   return transaction(db, async (session) => {
@@ -184,7 +186,58 @@ export async function finishRun(
     run.revision++;
     await c.examRuns.replaceOne({ _id: id }, run, { session });
     await writeResult(db, run, session);
+    await recordExamActivity(
+      db,
+      run,
+      run.status === 'EXPIRED' ? 'exam_expired' : 'exam_submitted',
+      context,
+      session,
+    );
     return run;
+  });
+}
+
+const leaveTypes = ['tab_changed', 'window_blur'] as const;
+
+export async function recordLeave(
+  db: Db,
+  runId: ObjectId,
+  type: (typeof leaveTypes)[number],
+  context: { ip?: string; userAgent?: string; device?: string } = {},
+) {
+  const c = collections(db);
+  return transaction(db, async (session) => {
+    const fresh = await c.examRuns.findOne({ _id: runId }, { session });
+    const limit = fresh?.settings.leaveLimit ?? 3;
+    if (!fresh || fresh.status !== 'RUNNING' || fresh.settings.secure !== true)
+      return {
+        accepted: false,
+        violations: 0,
+        limit,
+        terminated: fresh?.status === 'CANCELLED',
+        warning: false,
+      };
+    const accepted = await recordExamActivity(db, fresh, type, context, session);
+    const violations = await c.examActivity.countDocuments(
+      { runId, type: { $in: [...leaveTypes] } },
+      { session },
+    );
+    if (!accepted) return { accepted: false, violations, limit, terminated: false, warning: false };
+    if (violations > limit) {
+      fresh.status = 'CANCELLED';
+      fresh.submittedAt = new Date();
+      fresh.scorePercent = null;
+      fresh.passed = null;
+      fresh.revision++;
+      const replaced = await c.examRuns.replaceOne({ _id: runId, status: 'RUNNING' }, fresh, {
+        session,
+      });
+      if (replaced.modifiedCount !== 1)
+        return { accepted: true, violations, limit, terminated: false, warning: true };
+      await recordExamActivity(db, fresh, 'exam_cancelled', context, session);
+      return { accepted: true, violations, limit, terminated: true, warning: false };
+    }
+    return { accepted: true, violations, limit, terminated: false, warning: true };
   });
 }
 export async function expireRuns(db: Db) {

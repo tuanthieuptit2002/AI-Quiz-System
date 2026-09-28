@@ -54,7 +54,10 @@ export function ExamEditor({
     initial?.blueprint || { EASY: 20, MEDIUM: 15, HARD: 10, VERY_HARD: 5 },
   );
   const [questions, setQuestions] = useState<ExamQuestion[]>(initial?.questions || []);
-  const [settings, setSettings] = useState<ExamSettings>(initial?.settings || defaultSettings);
+  const [settings, setSettings] = useState<ExamSettings>({
+    ...defaultSettings,
+    ...initial?.settings,
+  });
   const [passwordAction, setPasswordAction] = useState('KEEP');
   const [password, setPassword] = useState('');
   const [picker, setPicker] = useState(false);
@@ -491,6 +494,11 @@ export function ExamEditor({
                     'Tự động nộp khi hết giờ',
                     'Server nộp phần đã lưu ngay cả khi đóng trình duyệt. Tắt: hết giờ mà chưa nộp sẽ không có điểm.',
                   ],
+                  [
+                    'secure',
+                    'Giám sát phòng thi',
+                    'Yêu cầu toàn màn hình, chặn sao chép/dán và ghi nhật ký. Rời tab hoặc rời khỏi trang web sẽ cảnh báo; quá số lần cho phép thì hủy và kết thúc lượt thi.',
+                  ],
                 ] as const
               ).map(([key, label, detail]) => (
                 <label className="exam-toggle" key={key}>
@@ -507,6 +515,25 @@ export function ExamEditor({
                 </label>
               ))}
             </div>
+            {settings.secure && (
+              <>
+                <Field label="Số lần được rời trang">
+                  <input
+                    required
+                    type="number"
+                    min={1}
+                    max={10}
+                    step={1}
+                    value={settings.leaveLimit}
+                    onChange={(e) => setting('leaveLimit', Number(e.target.value))}
+                  />
+                </Field>
+                <p className="exam-field-note">
+                  Rời tab hoặc rời khỏi trang web quá số lần này sẽ hủy bài và kết thúc lượt thi.
+                  Lần trong giới hạn chỉ hiện cảnh báo.
+                </p>
+              </>
+            )}
           </section>
           <section className="panel exam-form-section">
             <h2>

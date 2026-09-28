@@ -17,6 +17,7 @@ import {
   Plus,
   Search,
   Send,
+  ShieldCheck,
   Shuffle,
   Target,
   Users,
@@ -355,6 +356,10 @@ export function ExamManagement({ notify }: { notify: Notify }) {
               [detail.settings.showAnswers, 'Xem đáp án sau nộp'],
               [detail.settings.allowBack, 'Quay lại câu trước'],
               [detail.settings.autoSubmit, 'Tự nộp khi hết giờ'],
+              [detail.settings.secure, 'Giám sát phòng thi'],
+              ...(detail.settings.secure
+                ? [[true, `Hủy sau ${detail.settings.leaveLimit ?? 3} lần rời trang`] as const]
+                : []),
             ].map(([enabled, label]) => (
               <span key={String(label)}>
                 {enabled ? '✓' : '—'} {label}
@@ -711,6 +716,12 @@ export function StudentExams() {
                 ? 'Tự nộp phần đã lưu khi hết giờ.'
                 : 'Phải nộp trước khi hết giờ. Hết hạn chưa nộp sẽ không có điểm.'}
             </p>
+            {starting.settings.secure && (
+              <p>
+                <ShieldCheck size={18} /> Rời tab hoặc rời khỏi trang web sẽ bị cảnh báo. Quá{' '}
+                {starting.settings.leaveLimit ?? 3} lần, bài thi bị hủy và kết thúc.
+              </p>
+            )}
           </div>
           {starting.hasPassword && (
             <Field label="Mã truy cập">

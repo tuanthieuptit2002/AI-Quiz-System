@@ -7,9 +7,11 @@ export function ResultSummary({ run }: { run: ExamRun }) {
   if (!summary)
     return (
       <p className="exam-result-note">
-        {run.status === 'EXPIRED'
-          ? 'Lượt thi hết hạn khi chưa nộp, không có điểm.'
-          : 'Bài đang làm, chưa có kết quả chấm.'}
+        {run.status === 'CANCELLED'
+          ? 'Lượt thi đã kết thúc vì rời khỏi trang web quá số lần cho phép. Không có điểm.'
+          : run.status === 'EXPIRED'
+            ? 'Lượt thi hết hạn khi chưa nộp, không có điểm.'
+            : 'Bài đang làm, chưa có kết quả chấm.'}
       </p>
     );
   return (

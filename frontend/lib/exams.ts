@@ -9,6 +9,7 @@ export const runStatusLabels = {
   SUBMITTED: 'Đã chấm',
   PENDING_REVIEW: 'Chờ Teacher chấm',
   EXPIRED: 'Hết hạn, chưa nộp',
+  CANCELLED: 'Đã hủy',
 };
 export interface ExamSettings {
   startsAt: string | null;
@@ -18,6 +19,8 @@ export interface ExamSettings {
   passScore: number;
   randomQuestions: boolean;
   randomAnswers: boolean;
+  secure: boolean;
+  leaveLimit: number;
   showAnswers: boolean;
   allowBack: boolean;
   autoSubmit: boolean;
@@ -82,7 +85,12 @@ export interface ExamRun extends RunSummary {
   examId: string;
   title: string;
   subject: string;
-  settings: Pick<ExamSettings, 'showAnswers' | 'allowBack' | 'autoSubmit' | 'passScore'>;
+  settings: Pick<
+    ExamSettings,
+    'showAnswers' | 'allowBack' | 'autoSubmit' | 'passScore' | 'secure'
+  > & {
+    leaveLimit?: number;
+  };
   questions: RunQuestion[];
   responses: string[][];
   flagged: boolean[];
@@ -120,6 +128,8 @@ export const defaultSettings: ExamSettings = {
   passScore: 70,
   randomQuestions: true,
   randomAnswers: true,
+  secure: false,
+  leaveLimit: 3,
   showAnswers: false,
   allowBack: true,
   autoSubmit: true,

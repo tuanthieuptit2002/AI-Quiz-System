@@ -29,6 +29,17 @@ export function createExamRoutes(db: Db, config: Config) {
   router.get('/runs/:runId', requireRole('STUDENT'), taking.getRun);
   router.patch('/runs/:runId', requireRole('STUDENT'), taking.save);
   router.post('/runs/:runId/submit', requireRole('STUDENT'), taking.submit);
+  router.post(
+    '/runs/:runId/activity',
+    requireRole('STUDENT'),
+    rateLimit({
+      windowMs: 60000,
+      limit: 60,
+      keyGenerator: (req) => req.user!._id.toHexString(),
+      message: { message: 'Quá nhiều sự kiện phòng thi. Nhật ký tạm dừng một phút.' },
+    }),
+    taking.report,
+  );
   router.get('/runs/:runId/questions/:index/explanation', requireRole('STUDENT'), explanation.get);
   router.post(
     '/runs/:runId/questions/:index/explanation',
@@ -53,6 +64,7 @@ export function createExamRoutes(db: Db, config: Config) {
   router.post('/:id/duplicate', builder.duplicate);
   router.get('/:id/submissions', builder.submissions);
   router.get('/:id/submissions/:runId', builder.review);
+  router.get('/:id/submissions/:runId/activity', builder.activity);
   router.post('/:id/submissions/:runId/grade', grading.grade);
   router.get('/:id/submissions/:runId/grading', grading.overview);
   router.post(

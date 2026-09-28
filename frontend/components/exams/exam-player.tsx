@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
@@ -21,6 +21,7 @@ import { type ExamRun, type RunQuestion } from '@/lib/exams';
 import { typeLabels } from '@/lib/questions';
 import { ErrorBox, Spinner, Modal } from '../ui';
 import { useExamSession } from './use-exam-session';
+import { ExamGuardBanner, ExamLeaveDialog, useExamGuard } from './exam-guard';
 import { RunResult } from './exam-result';
 import { readableAnswer as readable } from '@/lib/grading';
 
@@ -199,6 +200,18 @@ export function ExamPlayer({
   const [dismissRecovery, setDismissRecovery] = useState(false);
   const [notice, setNotice] = useState('');
   const [showMap, setShowMap] = useState(false);
+  const guard = useExamGuard(
+    run.id,
+    run.status === 'RUNNING' && run.settings.secure === true,
+    () => void session.sync().catch(() => {}),
+  );
+  useEffect(() => {
+    if (!guard.ended || run.status !== 'RUNNING') return;
+    const tick = () => void session.sync().catch(() => {});
+    tick();
+    const timer = setInterval(tick, 2000);
+    return () => clearInterval(timer);
+  }, [guard.ended, run.status, session]);
   const answered = run.answered.filter(Boolean).length,
     flagged = run.flagged.filter(Boolean).length;
   const index = run.currentIndex,
@@ -240,6 +253,17 @@ export function ExamPlayer({
           />
         )}
         <RunResult run={run} close={close} />
+      </div>
+    );
+  if (guard.ended)
+    return (
+      <div className="ep-result-wrap">
+        <section className="panel exam-result">
+          <h1>Bài thi đã bị hủy</h1>
+          <p className="exam-result-note">
+            Bạn đã rời khỏi trang web quá số lần cho phép. Lượt thi này kết thúc và không có điểm.
+          </p>
+        </section>
       </div>
     );
   return (
@@ -312,6 +336,15 @@ export function ExamPlayer({
         {storageError && (
           <ErrorBox message="Trình duyệt không lưu được bản nháp. Giữ trang mở và chờ trạng thái Đã lưu trên máy chủ trước khi refresh." />
         )}
+        {run.settings.secure && (
+          <ExamGuardBanner
+            fullscreen={guard.fullscreen}
+            unavailable={guard.unavailable}
+            enter={() => void guard.enterFullscreen()}
+            leaveLimit={run.settings.leaveLimit ?? 3}
+          />
+        )}
+        <ExamLeaveDialog warning={guard.warning} dismiss={guard.dismiss} />
         {offline && (
           <div className="ep-banner ep-banner-warning" role="status">
             <WifiOff size={19} />
