@@ -24,7 +24,7 @@ changed() {
 wait_healthy() {
   local name=$1 url=$2
   for _ in $(seq 1 30); do
-    if curl -fsS -o /dev/null --max-time 3 "$url"; then
+    if curl -fs -o /dev/null --max-time 3 "$url"; then
       log "$name OK ($url)"
       return 0
     fi
