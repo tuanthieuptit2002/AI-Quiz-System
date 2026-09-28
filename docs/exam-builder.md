@@ -25,6 +25,10 @@ Chỉ bản nháp được sửa; cập nhật dùng số phiên bản để ph�
 
 Lưu trữ chặn lượt thi mới, giữ bài làm và cho phép lượt đang chạy hoàn thành đến hạn. Không xóa kết quả đã có.
 
+Khôi phục đưa đề lưu trữ về trạng thái trước khi lưu trữ. Đề đã có bài làm hoặc đang được giao cho lớp luôn trở lại **Đã phát hành** để nội dung vẫn bị khóa; đề lưu trữ trước khi có chức năng này mà chưa được dùng sẽ trở lại **Bản nháp**.
+
+Chỉ bản nháp được xóa vĩnh viễn. Đề đã phát hành hoặc lưu trữ không xóa được để giữ bài làm và kết quả.
+
 ## Lịch thi và quyền truy cập
 
 - Giờ nhập/hiển thị theo múi giờ thiết bị; API lưu UTC. Có thể bỏ trống giờ mở/đóng. Nếu có cả hai thì giờ đóng phải sau giờ mở.
@@ -66,8 +70,10 @@ POST   /api/exams/generate                { subject, topic?, counts: { EASY, MED
 POST   /api/exams                         Tạo bản nháp
 GET    /api/exams/:id                     Chi tiết và snapshot
 PUT    /api/exams/:id                     { version, content }
+DELETE /api/exams/:id                     Xóa bản nháp
 POST   /api/exams/:id/publish             { version }
 POST   /api/exams/:id/archive             { version }
+POST   /api/exams/:id/restore             { version } Khôi phục đề lưu trữ
 POST   /api/exams/:id/duplicate           Nhân bản
 GET    /api/exams/:id/submissions         Bài làm, page (20/trang)
 GET    /api/exams/:id/submissions/:runId   Xem bài làm

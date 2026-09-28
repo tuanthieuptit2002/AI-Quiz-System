@@ -281,10 +281,9 @@ export function createAIExamController(db: Db, config: Config) {
     const { version } = versionSchema.parse(req.body),
       job = await owned(req);
     if (job.status === 'SAVED') {
-      res.json({
-        job: aiExamDto(job),
-        exam: examDto((await c.exams.findOne({ _id: job.examId! }))!),
-      });
+      const exam = await c.exams.findOne({ _id: job.examId! });
+      if (!exam) httpError(404, 'Đề đã lưu từ bản này đã bị xóa.');
+      res.json({ job: aiExamDto(job), exam: examDto(exam) });
       return;
     }
     editable(job, version);

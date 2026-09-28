@@ -43,7 +43,7 @@ export function ExamEditor({
 }: {
   initial: Exam | null;
   close: () => void;
-  saved: () => void;
+  saved: (exam: Exam) => void;
 }) {
   const [title, setTitle] = useState(initial?.title || '');
   const [description, setDescription] = useState(initial?.description || '');
@@ -142,12 +142,12 @@ export function ExamEditor({
       password,
     };
     try {
-      await api(`/exams${initial ? `/${initial.id}` : ''}`, {
+      const exam = await api<Exam>(`/exams${initial ? `/${initial.id}` : ''}`, {
         method: initial ? 'PUT' : 'POST',
         body: jsonBody(initial ? { version: initial.version, content } : content),
       });
       setDirty(false);
-      saved();
+      saved(exam);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -711,8 +711,8 @@ export function ExamEditor({
               <Eye size={17} /> Xem trước đề
             </button>
             <small className="exam-summary-note">
-              Lưu bản nháp, kiểm tra nội dung rồi phát hành. Đề đã phát hành giữ nguyên nội dung và
-              thiết lập.
+              Sau khi lưu bản nháp, màn hình phát hành sẽ mở để bạn kiểm tra lần cuối và bấm Phát
+              hành đề. Đề đã phát hành giữ nguyên nội dung và thiết lập.
             </small>
           </div>
         </aside>

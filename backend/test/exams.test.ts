@@ -531,4 +531,70 @@ test('Exam builder and delivery enforce access, timing, randomization and gradin
       await post(`/exams/${copy.body.id}/publish`, token).send({ version: 1 }).expect(400);
     },
   );
+  await t.test(
+    'archived exams restore to their previous status and only drafts can be deleted',
+    async () => {
+      const del = (id: string, auth: string) =>
+        request(app)
+          .delete(`/api/exams/${id}`)
+          .set('X-Requested-With', 'QuizSpace')
+          .auth(auth, { type: 'bearer' });
+
+      const made = (await post('/exams', token).send(draft()).expect(201)).body;
+      await post(`/exams/${made.id}/restore`, token).send({ version: 1 }).expect(409);
+      const archived = await post(`/exams/${made.id}/archive`, token)
+        .send({ version: 1 })
+        .expect(200);
+      assert.equal(archived.body.archivedFrom, undefined);
+      await post(`/exams/${made.id}/archive`, token).send({ version: 2 }).expect(409);
+      await put(made.id, token, { version: 2, content: draft() }).expect(409);
+      await post(`/exams/${made.id}/restore`, other.accessToken).send({ version: 2 }).expect(404);
+      const restored = await post(`/exams/${made.id}/restore`, token)
+        .send({ version: 2 })
+        .expect(200);
+      assert.equal(restored.body.status, 'DRAFT');
+      await put(made.id, token, { version: 3, content: draft() }).expect(200);
+
+      await del(made.id, other.accessToken).expect(404);
+      await del(made.id, st).expect(403);
+      await del(made.id, token).expect(200);
+      await get(`/exams/${made.id}`, token).expect(404);
+
+      const published = await publish(
+        draft([bank[0]], {
+          settings: { ...settings, classIds: [], studentIds: [student.user.id] },
+        }),
+      );
+      await del(published.id, token).expect(409);
+      const back = await post(`/exams/${published.id}/archive`, token)
+        .send({ version: published.version })
+        .expect(200);
+      await del(published.id, token).expect(409);
+      const republished = await post(`/exams/${published.id}/restore`, token)
+        .send({ version: back.body.version })
+        .expect(200);
+      assert.equal(republished.body.status, 'PUBLISHED');
+      await post(`/exams/student/${published.id}/start`, st).send({}).expect(201);
+
+      const legacyUsed = await publish(
+        draft([bank[1]], {
+          settings: { ...settings, classIds: [], studentIds: [student.user.id] },
+        }),
+      );
+      await post(`/exams/student/${legacyUsed.id}/start`, st).send({}).expect(201);
+      const legacyDraft = (await post('/exams', token).send(draft()).expect(201)).body;
+      await c.exams.updateMany(
+        { _id: { $in: [legacyUsed.id, legacyDraft.id].map((id) => new ObjectId(id)) } },
+        { $set: { status: 'ARCHIVED' }, $inc: { version: 1 } },
+      );
+      const usedBack = await post(`/exams/${legacyUsed.id}/restore`, token)
+        .send({ version: legacyUsed.version + 1 })
+        .expect(200);
+      assert.equal(usedBack.body.status, 'PUBLISHED');
+      const draftBack = await post(`/exams/${legacyDraft.id}/restore`, token)
+        .send({ version: 2 })
+        .expect(200);
+      assert.equal(draftBack.body.status, 'DRAFT');
+    },
+  );
 });

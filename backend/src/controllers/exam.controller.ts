@@ -222,7 +222,12 @@ export function createExamController(db: Db) {
       .strict()
       .parse(req.body);
     if (exam.status !== 'DRAFT')
-      httpError(409, 'Đề đã phát hành không thể sửa. Hãy nhân bản để tạo đề mới.');
+      httpError(
+        409,
+        exam.status === 'ARCHIVED'
+          ? 'Đề đã lưu trữ không thể sửa. Hãy khôi phục hoặc nhân bản để tạo đề mới.'
+          : 'Đề đã phát hành không thể sửa. Hãy nhân bản để tạo đề mới.',
+      );
     req.body = input;
     const fields = await content(req, exam);
     const updated = await c.exams.findOneAndUpdate(
@@ -256,16 +261,48 @@ export function createExamController(db: Db) {
   const archive: RequestHandler = async (req, res) => {
     const exam = await owned(req);
     const { version } = z.object({ version: z.number().int().positive() }).strict().parse(req.body);
+    if (exam.status === 'ARCHIVED') httpError(409, 'Đề đã được lưu trữ.');
     const updated = await c.exams.findOneAndUpdate(
       { _id: exam._id, version },
-      { $set: { status: 'ARCHIVED', updatedAt: new Date() }, $inc: { version: 1 } },
+      {
+        $set: { status: 'ARCHIVED', archivedFrom: exam.status, updatedAt: new Date() },
+        $inc: { version: 1 },
+      },
       { returnDocument: 'after' },
     );
     if (!updated) httpError(409, 'Đề đã thay đổi.');
     res.json(examDto(updated));
   };
-  const duplicate: RequestHandler = async (req, res) => {
+  const restore: RequestHandler = async (req, res) => {
     const exam = await owned(req);
+    const { version } = z.object({ version: z.number().int().positive() }).strict().parse(req.body);
+    if (exam.status !== 'ARCHIVED') httpError(409, 'Chỉ khôi phục được đề đã lưu trữ.');
+    // A draft is editable, so an exam that students have taken or classes reference stays published.
+    const used =
+      (await c.examRuns.countDocuments({ examId: exam._id }, { limit: 1 })) > 0 ||
+      (await c.assignments.countDocuments({ examId: exam._id }, { limit: 1 })) > 0;
+    const status = used ? 'PUBLISHED' : exam.archivedFrom || 'DRAFT';
+    const updated = await c.exams.findOneAndUpdate(
+      { _id: exam._id, status: 'ARCHIVED', version },
+      {
+        $set: { status, updatedAt: new Date() },
+        $unset: { archivedFrom: '' },
+        $inc: { version: 1 },
+      },
+      { returnDocument: 'after' },
+    );
+    if (!updated) httpError(409, 'Đề đã thay đổi. Vui lòng tải lại.');
+    res.json(examDto(updated));
+  };
+  const remove: RequestHandler = async (req, res) => {
+    const exam = await owned(req);
+    if (exam.status !== 'DRAFT') httpError(409, 'Chỉ xóa được đề ở trạng thái bản nháp.');
+    const result = await c.exams.deleteOne({ _id: exam._id, status: 'DRAFT' });
+    if (!result.deletedCount) httpError(409, 'Đề đã thay đổi. Vui lòng tải lại.');
+    res.json({ message: 'Đã xóa đề thi.' });
+  };
+  const duplicate: RequestHandler = async (req, res) => {
+    const { archivedFrom: _archivedFrom, ...exam } = await owned(req);
     const copy: Exam = {
       ...exam,
       _id: new ObjectId(),
@@ -354,6 +391,8 @@ export function createExamController(db: Db) {
     update,
     publish,
     archive,
+    restore,
+    remove,
     duplicate,
     generate,
     audience,

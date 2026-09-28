@@ -39,6 +39,8 @@ export interface Exam {
   settings: ExamSettings;
   passwordHash: string;
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  /** Status before archiving. Absent on exams archived before restore existed. */
+  archivedFrom?: 'DRAFT' | 'PUBLISHED';
   version: number;
   admissionRevision: number;
   createdAt: Date;
@@ -96,7 +98,15 @@ export interface ExamRun {
   passed: boolean | null;
 }
 export function examDto(exam: Exam, detail = true) {
-  const { _id, ownerId, passwordHash, admissionRevision: _revision, questions, ...rest } = exam;
+  const {
+    _id,
+    ownerId,
+    passwordHash,
+    admissionRevision: _revision,
+    archivedFrom: _archivedFrom,
+    questions,
+    ...rest
+  } = exam;
   return {
     ...rest,
     id: _id.toHexString(),

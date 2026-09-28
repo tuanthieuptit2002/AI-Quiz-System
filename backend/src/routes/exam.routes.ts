@@ -59,8 +59,10 @@ export function createExamRoutes(db: Db, config: Config) {
   router.post('/', builder.create);
   router.get('/:id', builder.get);
   router.put('/:id', builder.update);
+  router.delete('/:id', builder.remove);
   router.post('/:id/publish', builder.publish);
   router.post('/:id/archive', builder.archive);
+  router.post('/:id/restore', builder.restore);
   router.post('/:id/duplicate', builder.duplicate);
   router.get('/:id/submissions', builder.submissions);
   router.get('/:id/submissions/:runId', builder.review);

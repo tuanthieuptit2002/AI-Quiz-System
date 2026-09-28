@@ -15,11 +15,13 @@ import {
   LockKeyhole,
   Play,
   Plus,
+  RotateCcw,
   Search,
   Send,
   ShieldCheck,
   Shuffle,
   Target,
+  Trash2,
   Users,
   Sparkles,
 } from 'lucide-react';
@@ -87,7 +89,7 @@ export function ExamManagement({ notify }: { notify: Notify }) {
       setBusy(false);
     }
   }
-  async function action(exam: Exam, action: 'publish' | 'archive' | 'duplicate') {
+  async function action(exam: Exam, action: 'publish' | 'archive' | 'restore' | 'duplicate') {
     if (
       action === 'archive' &&
       !window.confirm(
@@ -110,8 +112,28 @@ export function ExamManagement({ notify }: { notify: Notify }) {
           ? 'Đã phát hành đề thi theo lịch và quyền truy cập đã chọn.'
           : action === 'archive'
             ? 'Đã lưu trữ đề thi.'
-            : 'Đã tạo bản sao. Chọn lịch thi và đối tượng trước khi phát hành.',
+            : action === 'restore'
+              ? result.status === 'PUBLISHED'
+                ? 'Đã khôi phục đề về trạng thái Đã phát hành.'
+                : 'Đã khôi phục đề về Bản nháp. Bạn có thể chỉnh sửa và phát hành lại.'
+              : 'Đã tạo bản sao. Chọn lịch thi và đối tượng trước khi phát hành.',
       );
+    } catch (e) {
+      setError((e as Error).message);
+      notify((e as Error).message, true);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function remove(exam: Exam) {
+    if (!window.confirm(`Xóa vĩnh viễn bản nháp “${exam.title}”? Không thể hoàn tác.`)) return;
+    setBusy(true);
+    setError('');
+    try {
+      await api(`/exams/${exam.id}`, { method: 'DELETE' });
+      setDetail(null);
+      list.reload();
+      notify('Đã xóa bản nháp.');
     } catch (e) {
       setError((e as Error).message);
       notify((e as Error).message, true);
@@ -125,10 +147,12 @@ export function ExamManagement({ notify }: { notify: Notify }) {
         key={editor === 'new' ? 'new' : editor.id}
         initial={editor === 'new' ? null : editor}
         close={() => setEditor(null)}
-        saved={() => {
+        saved={(exam) => {
           setEditor(null);
+          setError('');
+          setDetail(exam);
           list.reload();
-          notify('Đã lưu bản nháp. Mở xem trước để phát hành đề.');
+          notify('Đã lưu bản nháp. Kiểm tra lại rồi bấm “Phát hành đề”.');
         }}
       />
     );
@@ -243,6 +267,28 @@ export function ExamManagement({ notify }: { notify: Notify }) {
                 >
                   <Copy size={16} />
                 </button>
+                {exam.status === 'ARCHIVED' && (
+                  <button
+                    className="icon-btn"
+                    aria-label={`Khôi phục ${exam.title}`}
+                    title="Khôi phục đề"
+                    disabled={busy}
+                    onClick={() => action(exam, 'restore')}
+                  >
+                    <RotateCcw size={16} />
+                  </button>
+                )}
+                {exam.status === 'DRAFT' && (
+                  <button
+                    className="icon-btn danger-text"
+                    aria-label={`Xóa ${exam.title}`}
+                    title="Xóa bản nháp"
+                    disabled={busy}
+                    onClick={() => remove(exam)}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
               <span className="exam-card-subject">{exam.subject}</span>
               <button className="exam-card-title" disabled={busy} onClick={() => open(exam.id)}>
@@ -285,29 +331,43 @@ export function ExamManagement({ notify }: { notify: Notify }) {
                 )}
               </div>
               <footer>
-                <button
-                  className="btn btn-secondary small"
-                  disabled={busy}
-                  onClick={() => setSubmissions(exam)}
-                >
-                  Bài làm
-                </button>
                 {exam.status === 'DRAFT' ? (
-                  <button
-                    className="btn btn-primary small"
-                    disabled={busy}
-                    onClick={() => open(exam.id, true)}
-                  >
-                    <FilePenLine size={16} /> Chỉnh sửa
-                  </button>
+                  <>
+                    <button
+                      className="btn btn-secondary small"
+                      disabled={busy}
+                      onClick={() => open(exam.id, true)}
+                    >
+                      <FilePenLine size={16} /> Chỉnh sửa
+                    </button>
+                    <button
+                      className="btn btn-primary small"
+                      disabled={busy}
+                      onClick={() => {
+                        setError('');
+                        open(exam.id);
+                      }}
+                    >
+                      <Send size={16} /> Phát hành
+                    </button>
+                  </>
                 ) : (
-                  <button
-                    className="btn btn-primary small"
-                    disabled={busy}
-                    onClick={() => open(exam.id)}
-                  >
-                    <Eye size={16} /> Xem đề
-                  </button>
+                  <>
+                    <button
+                      className="btn btn-secondary small"
+                      disabled={busy}
+                      onClick={() => setSubmissions(exam)}
+                    >
+                      Bài làm
+                    </button>
+                    <button
+                      className="btn btn-primary small"
+                      disabled={busy}
+                      onClick={() => open(exam.id)}
+                    >
+                      <Eye size={16} /> Xem đề
+                    </button>
+                  </>
                 )}
               </footer>
             </article>
@@ -403,16 +463,39 @@ export function ExamManagement({ notify }: { notify: Notify }) {
               sách; chỉ bắt đầu được trong lịch thi.
             </p>
           )}
+          {detail.status === 'ARCHIVED' && (
+            <p className="exam-field-note">
+              Khôi phục đưa đề về trạng thái trước khi lưu trữ. Đề đã có bài làm hoặc đã giao cho
+              lớp luôn trở lại trạng thái Đã phát hành.
+            </p>
+          )}
           <div className="modal-actions">
-            <button
-              className="btn btn-secondary"
-              disabled={busy || detail.status === 'ARCHIVED'}
-              onClick={() => action(detail, 'archive')}
-            >
-              <Archive size={16} /> Lưu trữ
-            </button>
+            {detail.status === 'ARCHIVED' ? (
+              <button
+                className="btn btn-primary"
+                disabled={busy}
+                onClick={() => action(detail, 'restore')}
+              >
+                {busy ? <Spinner /> : <RotateCcw size={16} />} Khôi phục
+              </button>
+            ) : (
+              <button
+                className="btn btn-secondary"
+                disabled={busy}
+                onClick={() => action(detail, 'archive')}
+              >
+                <Archive size={16} /> Lưu trữ
+              </button>
+            )}
             {detail.status === 'DRAFT' && (
               <>
+                <button
+                  className="btn btn-secondary danger-text"
+                  disabled={busy}
+                  onClick={() => remove(detail)}
+                >
+                  <Trash2 size={16} /> Xóa
+                </button>
                 <button
                   className="btn btn-secondary"
                   disabled={busy}

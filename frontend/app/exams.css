@@ -125,8 +125,11 @@
   color: #16896c;
   border-radius: 12px;
 }
-.exam-card-top > .icon-btn {
+.exam-card-top > .icon-btn:first-of-type {
   margin-left: auto;
+}
+.exam-card-top > .icon-btn + .icon-btn {
+  margin-left: -6px;
 }
 .exam-state {
   display: inline-flex;
