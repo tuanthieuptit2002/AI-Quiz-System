@@ -479,7 +479,7 @@ export function ExamEditor({
                   [
                     'showAnswers',
                     'Hiển thị đáp án sau khi nộp',
-                    'Bao gồm giải thích và hướng dẫn chấm, kể cả khi còn lượt thi khác.',
+                    'Bao gồm đáp án, hướng dẫn chấm và Explain with AI, kể cả khi còn lượt thi khác.',
                   ],
                   [
                     'allowBack',

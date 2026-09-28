@@ -34,6 +34,8 @@ Ví dụ 50 câu khách quan, mỗi câu 2 điểm, đúng 41 và sai 9: **82/10
 
 Tắt **Xem đáp án sau nộp** vẫn cho Student xem tổng điểm/thống kê, nhưng không trả khóa đáp án, rubric, giải thích, điểm và nhận xét từng câu. Các đề xuất AI và lịch sử người chấm chỉ dành cho Teacher quản lý đề hoặc Admin.
 
+Khi được xem đáp án, Student có thể dùng [AI Explanation](ai-explanation.md) để hiểu bài và hỏi tiếp. Hội thoại này tách biệt với trợ lý chấm của Teacher, không thay đổi điểm chính thức.
+
 ## DeepSeek chỉ là grading assistant
 
 Dùng `DEEPSEEK_API_KEY` và `DEEPSEEK_MODEL` trong `backend/.env`, giống các module AI trước. Không thêm biến môi trường hoặc dependency. Không có API key hoặc DeepSeek gặp lỗi thì vẫn chấm thủ công bình thường.

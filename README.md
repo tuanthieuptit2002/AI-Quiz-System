@@ -102,7 +102,7 @@ Xem [hướng dẫn AI Exam Generator](docs/ai-exam-generator.md) về quy tắc
 
 ## Dữ liệu học tập
 
-Các collection chính: `users`, `sessions`, `classes`, `questions`, `questionVersions`, `exams`, `examRuns`, `examAttempts`, `aiGenerations`, `aiExams`, `gradingSuggestions` và `gradingEvents`. Unique/TTL index được tạo khi server khởi động.
+Các collection chính: `users`, `sessions`, `classes`, `questions`, `questionVersions`, `exams`, `examRuns`, `examAttempts`, `aiGenerations`, `aiExams`, `gradingSuggestions`, `gradingEvents` và `explanationThreads`. Unique/TTL index được tạo khi server khởi động.
 
 Lịch sử và tiến độ đọc dữ liệu thật từ `examAttempts`, không tạo điểm mẫu. Khi bài thi được chấm xong, backend ghi kết quả vào collection này (thang điểm 10). Bài có tự luận/trả lời ngắn chưa chấm đủ không được tính vào tiến độ. Học sinh không thể tự gửi điểm.
 
@@ -142,6 +142,17 @@ Teacher/Admin vào **Đề thi → Bài làm → Xem / chấm**. Student xem k�
 
 Dùng `DEEPSEEK_API_KEY` và `DEEPSEEK_MODEL` hiện có. Không cấu hình AI vẫn chấm thủ công được. Xem [hướng dẫn Auto Grading](docs/auto-grading.md).
 
+## AI Explanation — hiểu bài sau khi thi
+
+Student mở kết quả của lượt thi, chọn **Explain with AI** dưới một câu, rồi dùng gợi ý hoặc nhập câu hỏi tiếp theo.
+
+- Đối chiếu câu trả lời với đáp án/rubric của đề, giải thích kiến thức cần nhớ và cách vận dụng; giữ đúng nhãn A/B/C/D của lượt thi đã trộn.
+- Hội thoại riêng theo Student, lượt thi và câu hỏi, được lưu trong MongoDB để mở lại sau refresh. Lỗi AI có thể thử lại mà không làm mất các lượt trao đổi trước.
+- Chỉ dùng sau khi nộp và Teacher bật **Hiển thị đáp án sau khi nộp**. AI không sửa điểm; câu chờ chấm được ghi rõ là chưa có quyết định cuối cùng của Teacher.
+- Nếu Teacher sửa điểm/nhận xét, lần trao đổi tiếp theo dùng ngữ cảnh mới. Câu có hình ảnh hiện cần hỏi Teacher.
+
+Dùng chung cấu hình DeepSeek. Giới hạn 8 lượt/hội thoại và 50 yêu cầu/Student trong 24 giờ. Xem [hướng dẫn AI Explanation](docs/ai-explanation.md).
+
 ## Cấu hình
 
 Xem `backend/.env.example`:
@@ -175,6 +186,7 @@ Test dùng MongoDB tạm qua `mongodb-memory-server`, không sửa dữ liệu A
 Kiểm tra gồm tài khoản/RBAC, Question Bank, import/export, Exam Builder, làm bài/chấm điểm và AI Generator (đọc tài liệu, bảo vệ URL, job nhiều nhóm, duyệt đồng thời và khôi phục khi lỗi). AI trong test tự động được giả lập, không gọi API tính phí.
 Exam Player có thêm kiểm thử bản nháp, mất phản hồi, đồng bộ khi có mạng, xung đột đáp án, điều hướng tuần tự và hết giờ.
 Auto Grading kiểm tra điểm có trọng số, xác nhận của Teacher, lịch sử sửa điểm, quyền truy cập, job AI/lease, thử lại và dữ liệu AI không hợp lệ.
+AI Explanation kiểm tra quyền xem đáp án, hội thoại nhiều lượt, câu hỏi đã trộn, gửi lại request, lease, giới hạn sử dụng và kết quả thay đổi sau khi Teacher chấm lại.
 
 ## Cấu trúc
 

@@ -1,0 +1,467 @@
+.xe-intro {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px 23px;
+  margin: 22px 0;
+  background: linear-gradient(120deg, #eef5f1, #f2f1fa);
+  border: 1px solid #dde8e1;
+  border-radius: 15px;
+}
+.xe-intro > span {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: white;
+  color: #788aac;
+  flex: 0 0 auto;
+}
+.xe-intro b {
+  font-size: 15px;
+  color: #344e42;
+}
+.xe-intro p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #6c8175;
+  margin: 5px 0 0;
+}
+.xe-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+.xe-options > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid #e8edea;
+  padding: 13px;
+  border-radius: 10px;
+  font-size: 12px;
+  min-width: 0;
+}
+.xe-options > div > span {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  background: #f0f4f2;
+  border-radius: 7px;
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 600;
+}
+.xe-options p {
+  margin: 2px 0 0;
+  line-height: 1.7;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.xe-options small {
+  font-size: 9px;
+  color: #789086;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.xe-options > .is-selected {
+  background: #fff7f1;
+  border-color: #eed7c4;
+}
+.xe-options > .is-correct {
+  background: #eff8f2;
+  border-color: #bdddc9;
+}
+.xe-options .is-correct > span {
+  background: #d6ecdf;
+  color: #267756;
+}
+.xe-options .is-correct small {
+  color: #328363;
+}
+.xe-section {
+  margin-top: 22px;
+  border-top: 1px solid #e5ece7;
+  padding-top: 18px;
+}
+.xe-trigger {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: #6b7e9d;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  text-align: left;
+  width: 100%;
+}
+.xe-trigger > span:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.xe-trigger b {
+  font-size: 13px;
+  font-weight: 650;
+  color: #4f6986;
+}
+.xe-trigger small {
+  font-size: 10px;
+  color: #8b99a5;
+}
+.xe-trigger > svg:last-child {
+  margin-left: auto;
+}
+.xe-trigger-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #f0f2fb;
+  flex: 0 0 auto;
+}
+.xe-trigger:hover .xe-trigger-icon,
+.xe-section.is-open .xe-trigger-icon {
+  background: #e6ebfa;
+}
+.xe-panel {
+  margin-top: 18px;
+  border-radius: 15px;
+  border: 1px solid #dfe5ef;
+  background: #f8fafd;
+  overflow: hidden;
+}
+.xe-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 24px 14px;
+}
+.xe-heading > div,
+.xe-heading > div > div {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.xe-heading > div > div {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+.xe-heading b {
+  font-size: 14px;
+  color: #304654;
+}
+.xe-heading > div > div > span {
+  font-size: 10px;
+  color: #8a97a7;
+}
+.xe-orb {
+  background: linear-gradient(145deg, #e1e9f7, #e6dffa);
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #7c87b4;
+}
+.xe-conversation-label {
+  color: #91a0b1;
+  background: white;
+  border-radius: 7px;
+  border: 1px solid #e7ecf4;
+  padding: 6px 9px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.xe-panel .xe-policy {
+  padding: 0 24px 18px;
+  margin: 0;
+  color: #8a98a6;
+  font-size: 10px;
+  line-height: 1.8;
+  border-bottom: 1px solid #e7ecf3;
+}
+.xe-panel > .error-box {
+  margin: 15px 20px;
+}
+.xe-conversation {
+  padding: 0 24px;
+}
+.xe-turn {
+  margin: 24px 0;
+}
+.xe-student {
+  margin-left: auto;
+  max-width: 80%;
+  width: fit-content;
+  padding: 12px 17px;
+  background: #eaf1ee;
+  border-radius: 13px 13px 3px 13px;
+}
+.xe-student > span {
+  font-size: 8px;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: #88a092;
+}
+.xe-student > p {
+  font-size: 12px;
+  margin: 5px 0 0;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #466353;
+}
+.xe-assistant {
+  margin-top: 20px;
+  padding: 22px;
+  border: 1px solid #e8edf4;
+  background: white;
+  border-radius: 13px;
+  box-shadow: 0 3px 6px #455c7510;
+}
+.xe-ai-name {
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  letter-spacing: 1px;
+  color: #8b97b9;
+  font-weight: 700;
+}
+.xe-assistant .xe-explanation {
+  font-size: 14px;
+  line-height: 1.95;
+  color: #40594d;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 16px 0 20px;
+}
+.xe-takeaway {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #eff7f2;
+  border: 1px solid #e0eee5;
+  padding: 15px 17px;
+  border-radius: 10px;
+  color: #5c896e;
+}
+.xe-takeaway > svg,
+.xe-practice > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+.xe-takeaway b,
+.xe-practice b {
+  font-size: 11px;
+}
+.xe-takeaway p,
+.xe-practice p {
+  font-size: 12px;
+  line-height: 1.85;
+  margin: 5px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.xe-practice {
+  display: flex;
+  gap: 12px;
+  color: #8190a1;
+  padding: 15px 2px 5px;
+}
+.xe-assistant .xe-caveat {
+  font-size: 11px;
+  line-height: 1.8;
+  background: #fff8e9;
+  border-radius: 8px;
+  padding: 12px;
+  color: #9b8045;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.xe-time {
+  display: block;
+  font-size: 9px;
+  color: #a2abb5;
+  margin-top: 17px;
+}
+.xe-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 0;
+  color: #8c98ae;
+  font-size: 12px;
+}
+.xe-panel > .xe-loading {
+  padding: 22px;
+}
+.xe-loading small {
+  display: block;
+  font-size: 10px;
+  margin-top: 7px;
+  color: #a2acba;
+}
+.xe-empty,
+.xe-reconnect {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #7f90a1;
+  padding: 18px 24px;
+}
+.xe-failed p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #a17462;
+  margin: 16px 0;
+}
+.xe-suggestions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 0 24px 18px;
+}
+.xe-suggestions button {
+  font-size: 11px;
+  border: 1px solid #dfe6f0;
+  background: white;
+  color: #7c8da4;
+  border-radius: 9px;
+  padding: 9px 12px;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  text-align: left;
+  line-height: 1.6;
+}
+.xe-suggestions button:hover:not(:disabled) {
+  background: #edf2fc;
+  color: #61749e;
+  border-color: #cdd8ee;
+}
+.xe-composer {
+  border-top: 1px solid #e7ecf3;
+  padding: 20px 24px;
+  background: #f3f6fb;
+}
+.xe-composer label {
+  color: #687f8a;
+  font-size: 11px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 10px;
+}
+.xe-composer > div {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+.xe-composer textarea {
+  flex: 1;
+  background: white;
+  resize: vertical;
+  min-height: 64px;
+  font-size: 12px;
+  line-height: 1.7;
+  border: 1px solid #dde5ed;
+  border-radius: 10px;
+}
+.xe-composer .btn {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.xe-composer footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  color: #9aa6b5;
+  font-size: 9px;
+  margin-top: 10px;
+  line-height: 1.7;
+}
+.xe-composer footer > span:last-child {
+  white-space: nowrap;
+}
+.xe-limit {
+  color: #7f8da0;
+  font-size: 12px;
+  line-height: 1.7;
+  padding: 16px 24px;
+}
+.xe-image-note {
+  margin-top: 20px;
+  color: #8d9b96;
+  font-size: 11px;
+  line-height: 1.7;
+}
+@media (max-width: 780px) {
+  .xe-options {
+    grid-template-columns: 1fr;
+  }
+  .xe-assistant {
+    padding: 18px;
+  }
+  .xe-assistant .xe-explanation {
+    font-size: 13px;
+  }
+}
+@media (max-width: 480px) {
+  .xe-intro {
+    align-items: flex-start;
+    padding: 16px;
+    gap: 10px;
+  }
+  .xe-intro b {
+    font-size: 13px;
+  }
+  .xe-heading {
+    padding: 18px 14px 12px;
+    flex-wrap: wrap;
+  }
+  .xe-panel .xe-policy {
+    padding: 0 14px 14px;
+  }
+  .xe-conversation {
+    padding: 0 12px;
+  }
+  .xe-assistant {
+    padding: 15px;
+  }
+  .xe-student {
+    max-width: 95%;
+  }
+  .xe-takeaway {
+    padding: 12px;
+    gap: 8px;
+  }
+  .xe-composer {
+    padding: 16px 14px;
+  }
+  .xe-composer > div {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .xe-composer .btn {
+    justify-content: center;
+  }
+  .xe-suggestions {
+    padding: 0 14px 15px;
+  }
+  .xe-trigger small {
+    font-size: 9px;
+  }
+}

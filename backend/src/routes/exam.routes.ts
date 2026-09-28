@@ -6,12 +6,14 @@ import { createExamController } from '../controllers/exam.controller.js';
 import { createExamTakingController } from '../controllers/exam-taking.controller.js';
 import { createGradingController } from '../controllers/grading.controller.js';
 import type { Config } from '../common/config.js';
+import { createExplanationController } from '../controllers/explanation.controller.js';
 
 export function createExamRoutes(db: Db, config: Config) {
   const router = Router();
   const builder = createExamController(db);
   const taking = createExamTakingController(db);
   const grading = createGradingController(db, config);
+  const explanation = createExplanationController(db, config);
   router.get('/student', requireRole('STUDENT'), taking.list);
   router.post(
     '/student/:id/start',
@@ -27,6 +29,18 @@ export function createExamRoutes(db: Db, config: Config) {
   router.get('/runs/:runId', requireRole('STUDENT'), taking.getRun);
   router.patch('/runs/:runId', requireRole('STUDENT'), taking.save);
   router.post('/runs/:runId/submit', requireRole('STUDENT'), taking.submit);
+  router.get('/runs/:runId/questions/:index/explanation', requireRole('STUDENT'), explanation.get);
+  router.post(
+    '/runs/:runId/questions/:index/explanation',
+    requireRole('STUDENT'),
+    rateLimit({
+      windowMs: 60000,
+      limit: 12,
+      keyGenerator: (req) => req.user!._id.toHexString(),
+      message: { message: 'Tối đa 12 yêu cầu giải thích mỗi phút. Vui lòng chờ.' },
+    }),
+    explanation.send,
+  );
   router.use(requireRole('ADMIN', 'TEACHER'));
   router.get('/audience', builder.audience);
   router.post('/generate', builder.generate);

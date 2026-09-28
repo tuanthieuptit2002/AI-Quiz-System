@@ -1,13 +1,15 @@
 'use client';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Sparkles, Check } from 'lucide-react';
 import { api } from '@/lib/api';
 import { type ExamRun, runStatusLabels } from '@/lib/exams';
 import { typeLabels } from '@/lib/questions';
 import { readableAnswer } from '@/lib/grading';
 import { ErrorBox } from '../ui';
 import { ResultSummary } from './result-summary';
+import { QuestionExplanation } from './question-explanation';
+import { choiceAnswer } from '@/lib/explanations';
 
 export function RunResult({ run: initial, close }: { run: ExamRun; close: () => void }) {
   const [run, setRun] = useState(initial);
@@ -69,6 +71,20 @@ export function RunResult({ run: initial, close }: { run: ExamRun; close: () => 
           Đề thi này không công khai đáp án và điểm từng câu sau khi nộp.
         </p>
       )}
+      {run.settings.showAnswers && ['SUBMITTED', 'PENDING_REVIEW'].includes(run.status) && (
+        <div className="xe-intro">
+          <span>
+            <Sparkles size={22} />
+          </span>
+          <div>
+            <b>Hiểu bài sâu hơn sau mỗi lần thi</b>
+            <p>
+              Chọn <strong>Explain with AI</strong> dưới một câu để hiểu đáp án và hỏi tiếp điều bạn
+              chưa rõ.
+            </p>
+          </div>
+        </div>
+      )}
       <div className="exam-review-list">
         {run.questions.map(
           (q, i) =>
@@ -87,6 +103,28 @@ export function RunResult({ run: initial, close }: { run: ExamRun; close: () => 
                   </span>
                 </div>
                 <h3>{q.question}</h3>
+                {q.correct &&
+                  ['SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TRUE_FALSE'].includes(q.type) && (
+                    <div className="xe-options">
+                      {q.options.map((option, optionIndex) => {
+                        const correct = q.correct!.includes(option.id),
+                          selected = run.responses[i].includes(option.id);
+                        return (
+                          <div
+                            key={option.id}
+                            className={`${correct ? 'is-correct' : ''} ${selected ? 'is-selected' : ''}`}
+                          >
+                            <span>{String.fromCharCode(65 + optionIndex)}</span>
+                            <p>{option.text}</p>
+                            <small>
+                              {correct && <Check size={13} />}
+                              {selected ? 'Bạn chọn' : correct ? 'Đáp án đúng' : ''}
+                            </small>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 {q.image && (
                   <Image
                     className="question-image"
@@ -99,12 +137,22 @@ export function RunResult({ run: initial, close }: { run: ExamRun; close: () => 
                 )}
                 <div className="exam-response-text">
                   <small>BÀI LÀM</small>
-                  <p>{readableAnswer(q, run.responses[i]) || 'Chưa trả lời'}</p>
+                  <p>
+                    {(['SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TRUE_FALSE'].includes(q.type)
+                      ? choiceAnswer(q, run.responses[i])
+                      : readableAnswer(q, run.responses[i])) || 'Chưa trả lời'}
+                  </p>
                 </div>
                 {q.correct && (
                   <div className="answer-explanation">
                     <b>{q.type === 'ESSAY' ? 'Hướng dẫn chấm' : 'Đáp án tham chiếu'}</b>
-                    <p>{q.type === 'ESSAY' ? q.rubric : readableAnswer(q, q.correct)}</p>
+                    <p>
+                      {q.type === 'ESSAY'
+                        ? q.rubric
+                        : ['SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TRUE_FALSE'].includes(q.type)
+                          ? choiceAnswer(q, q.correct)
+                          : readableAnswer(q, q.correct)}
+                    </p>
                     {q.explanation && <p>{q.explanation}</p>}
                   </div>
                 )}
@@ -114,6 +162,19 @@ export function RunResult({ run: initial, close }: { run: ExamRun; close: () => 
                     <p>{run.feedback[i]}</p>
                   </div>
                 )}
+                {run.settings.showAnswers &&
+                  ['SUBMITTED', 'PENDING_REVIEW'].includes(run.status) &&
+                  (q.image ? (
+                    <p className="xe-image-note">
+                      AI hiện giải thích câu dạng văn bản. Với câu có hình ảnh, hãy hỏi Teacher.
+                    </p>
+                  ) : (
+                    <QuestionExplanation
+                      runId={run.id}
+                      index={i}
+                      pendingGrade={run.awarded[i] === null}
+                    />
+                  ))}
               </section>
             ),
         )}

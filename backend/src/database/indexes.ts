@@ -45,6 +45,21 @@ export async function ensureIndexes(db: Db) {
     ),
     c.gradingEvents.createIndex({ runId: 1, createdAt: -1 }),
     c.gradingEvents.createIndex({ runId: 1, revision: 1, index: 1 }, { unique: true }),
+    c.explanationThreads.createIndex(
+      { studentId: 1, runId: 1, index: 1, sourceKey: 1 },
+      { unique: true },
+    ),
+    c.explanationThreads.createIndex({ studentId: 1, 'requests.id': 1 }, { unique: true }),
+    c.explanationThreads.createIndex({ studentId: 1, 'requests.createdAt': -1 }),
+    c.explanationThreads.createIndex({ status: 1, leaseUntil: 1, updatedAt: 1 }),
+    c.explanationThreads.createIndex(
+      { studentId: 1 },
+      {
+        unique: true,
+        name: 'one_active_explanation_per_student',
+        partialFilterExpression: { status: { $in: ['QUEUED', 'GENERATING'] } },
+      },
+    ),
     c.aiGenerations.createIndex({ ownerId: 1, createdAt: -1 }),
     c.aiGenerations.createIndex({ ownerId: 1, requestId: 1 }, { unique: true }),
     c.aiGenerations.createIndex(
